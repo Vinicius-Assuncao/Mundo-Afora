@@ -10,7 +10,7 @@ const MODES = {
 };
 
 let db = JSON.parse(localStorage.getItem(KEY) || 'null') || { trips: [], currentId: null };
-let dayIdx = 0, lastResults = [], editingId = null, pickedEmoji = '🌍';
+let dayIdx = 0, overview = false, lastResults = [], editingId = null, pickedEmoji = '🌍';
 let map, layer;
 
 // ---------- utilidades ----------
@@ -127,7 +127,7 @@ function show(view) {
 }
 function goHome() { show('home'); renderHome(); }
 function openTrip(id) {
-  db.currentId = id; dayIdx = 0; save();
+  db.currentId = id; dayIdx = 0; overview = false; save();
   show('trip');
   map.invalidateSize();
   renderTrip();
@@ -156,18 +156,74 @@ function renderTrip() {
   if (dayIdx >= t.days.length) dayIdx = 0;
   $('#topTitle').textContent = `${t.emoji || '🌍'} ${t.name}`;
   renderDaysNav(t);
-  renderDayHead(t);
-  renderSummary(t);
-  renderStops(t);
-  renderIdeas(t);
+  $('#recalcDay').classList.toggle('hidden', overview);
+  $('#searchForm').classList.toggle('hidden', overview);
+  $('#results').classList.toggle('hidden', overview);
+  $('.ideas').classList.toggle('hidden', overview);
+  $('#stops').classList.toggle('hidden', overview);
+  $('#overviewDays').classList.toggle('hidden', !overview);
+  if (overview) {
+    renderOverview(t);
+    $('#stops').innerHTML = '';
+  } else {
+    renderDayHead(t);
+    renderSummary(t);
+    renderStops(t);
+    renderIdeas(t);
+  }
   drawMap(t);
 }
 
 function renderDaysNav(t) {
-  $('#daysNav').innerHTML = t.days.map((d, i) => `
-    <button class="tab ${i === dayIdx ? 'on' : ''}" data-i="${i}" style="--c:${d.color}">
+  $('#daysNav').innerHTML = `
+    <button class="tab overview-tab ${overview ? 'on' : ''}" data-act="overview" style="--c:var(--azul)" aria-pressed="${overview}">
+      <b>Visão geral</b><small>Toda a viagem</small>
+    </button>` + t.days.map((d, i) => `
+    <button class="tab ${!overview && i === dayIdx ? 'on' : ''}" data-i="${i}" style="--c:${d.color}" aria-pressed="${!overview && i === dayIdx}">
       <b>${esc(d.name)}</b><small>${d.date ? fmtDate(d.date) : 'sem data'}</small>
     </button>`).join('') + `<button class="tab add" data-act="addDay">+ Dia</button>`;
+}
+
+function renderOverview(t) {
+  const totals = t.days.reduce((sum, d) => {
+    sum.stops += d.stops.length;
+    for (const stop of d.stops) {
+      sum.visit += +stop.stay || 0;
+      sum.drive += stop.legMin || 0;
+      sum.km += stop.legKm || 0;
+    }
+    return sum;
+  }, { stops: 0, visit: 0, drive: 0, km: 0 });
+
+  $('#dayHead').innerHTML = '<div class="dh"><h2>Visão geral da viagem</h2></div>';
+  $('#summary').innerHTML = `
+    <span class="chip">${t.days.length} dias</span>
+    <span class="chip">${totals.stops} paradas</span>
+    <span class="chip">Visitas: ${fmt(totals.visit)}</span>
+    <span class="chip">Deslocamento: ${fmt(totals.drive)}</span>
+    <span class="chip">${totals.km.toFixed(1)} km</span>`;
+  $('#overviewDays').innerHTML = t.days.map((d, i) => {
+    const visit = d.stops.reduce((sum, stop) => sum + (+stop.stay || 0), 0);
+    const drive = d.stops.reduce((sum, stop) => sum + (stop.legMin || 0), 0);
+    const km = d.stops.reduce((sum, stop) => sum + (stop.legKm || 0), 0);
+    return `
+      <article class="overview-day" style="--c:${d.color}">
+        <div class="overview-day-head">
+          <h3>${esc(d.name)}</h3>
+          <small>${d.date ? fmtDate(d.date) : 'sem data'}</small>
+        </div>
+        <div class="summary">
+          <span class="chip">${d.stops.length} paradas</span>
+          <span class="chip">Visitas: ${fmt(visit)}</span>
+          <span class="chip">Deslocamento: ${fmt(drive)}</span>
+          <span class="chip">${km.toFixed(1)} km</span>
+        </div>
+        ${d.stops.length
+          ? `<ol>${d.stops.map((stop, j) => `<li><span class="num" style="--c:${d.color}">${j + 1}</span>${esc(stop.name)}</li>`).join('')}</ol>`
+          : '<p class="empty-line">Nenhuma parada neste dia.</p>'}
+        <button class="btn sm" data-day="${i}">Abrir dia</button>
+      </article>`;
+  }).join('');
 }
 
 function renderDayHead(t) {
@@ -255,25 +311,26 @@ function initMap() {
 
 function drawMap(t) {
   layer.clearLayers();
-  const d = t.days[dayIdx];
-  if (!d) return;
   const pts = [];
-  d.stops.forEach((s, i) => {
-    const ll = [s.lat, s.lon];
-    pts.push(ll);
-    L.marker(ll, {
-      icon: L.divIcon({
-        className: '',
-        html: `<div class="pin" style="background:${d.color}">${i + 1}</div>`,
-        iconSize: [30, 30], iconAnchor: [15, 15],
-      }),
-    }).bindTooltip(s.name).addTo(layer);
-    if (i > 0) {
-      const geo = s.legGeo || [[d.stops[i - 1].lat, d.stops[i - 1].lon], ll];
-      const dashed = !s.legGeo;
-      L.polyline(geo, { color: '#fff', weight: 8, opacity: .8 }).addTo(layer);
-      L.polyline(geo, { color: d.color, weight: 5, dashArray: dashed ? '6 8' : null }).addTo(layer);
-    }
+  const days = overview ? t.days : [t.days[dayIdx]];
+  days.filter(Boolean).forEach((d) => {
+    d.stops.forEach((s, i) => {
+      const ll = [s.lat, s.lon];
+      pts.push(ll);
+      L.marker(ll, {
+        icon: L.divIcon({
+          className: '',
+          html: `<div class="pin" style="background:${d.color}">${i + 1}</div>`,
+          iconSize: [30, 30], iconAnchor: [15, 15],
+        }),
+      }).bindTooltip(overview ? `${d.name}: ${s.name}` : s.name).addTo(layer);
+      if (i > 0) {
+        const geo = s.legGeo || [[d.stops[i - 1].lat, d.stops[i - 1].lon], ll];
+        const dashed = !s.legGeo;
+        L.polyline(geo, { color: '#fff', weight: 8, opacity: .8 }).addTo(layer);
+        L.polyline(geo, { color: d.color, weight: 5, dashArray: dashed ? '6 8' : null }).addTo(layer);
+      }
+    });
   });
   if (pts.length) map.fitBounds(pts, { padding: [40, 40], maxZoom: 15 });
 }
@@ -377,17 +434,27 @@ $('#tDelete').onclick = deleteTrip;
 
 $('#daysNav').onclick = (e) => {
   const t = cur();
+  const overviewButton = e.target.closest('[data-act="overview"]');
+  if (overviewButton) { overview = true; renderTrip(); return; }
   const add = e.target.closest('[data-act="addDay"]');
   if (add) {
     const n = prompt('Nome do dia:', `Dia ${t.days.length + 1}`);
     if (!n) return;
     const d = newDay(t.days.length);
     d.name = n;
-    t.days.push(d); dayIdx = t.days.length - 1; save(); renderTrip();
+    t.days.push(d); dayIdx = t.days.length - 1; overview = false; save(); renderTrip();
     return;
   }
   const tab = e.target.closest('.tab');
-  if (tab) { dayIdx = +tab.dataset.i; renderTrip(); }
+  if (tab) { dayIdx = +tab.dataset.i; overview = false; renderTrip(); }
+};
+
+$('#overviewDays').onclick = (e) => {
+  const button = e.target.closest('[data-day]');
+  if (!button) return;
+  dayIdx = +button.dataset.day;
+  overview = false;
+  renderTrip();
 };
 
 $('#dayHead').onclick = (e) => {

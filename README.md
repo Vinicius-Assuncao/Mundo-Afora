@@ -12,6 +12,10 @@ App de planejamento de viagens em HTML, CSS e JavaScript puros, instalável no c
 - `manifest.json` e `icon.svg`: instalação no celular
 - `renomear.py`: troca o nome do projeto em todos os lugares
 
+## Testar localmente
+
+Sirva os arquivos por HTTP, por exemplo com `python -m http.server 8000`, e abra `http://localhost:8000`. Em `localhost`, o service worker não usa cópias em cache: cada recarga busca os arquivos no servidor. Se o servidor for parado, a página já aberta continua visível até ser recarregada; depois disso, o navegador não conseguirá abrir o endereço.
+
 ## Chave da API de trajetos (OpenRouteService)
 
 1. Crie uma chave gratuita em openrouteservice.org.

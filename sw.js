@@ -18,13 +18,18 @@ self.addEventListener('fetch', (e) => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
 
-  // mapas (OSM e satélite), bibliotecas CDN e arquivos do app: cache primeiro
+  if (url.origin === self.location.origin &&
+      ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)) {
+    e.respondWith(fetch(req));
+    return;
+  }
+
+  // Mapas e bibliotecas CDN usam cache primeiro.
   const cacheFirst =
     url.hostname.endsWith('tile.openstreetmap.org') ||
     url.hostname.endsWith('arcgisonline.com') ||
     url.hostname === 'unpkg.com' ||
-    url.hostname === 'fonts.gstatic.com' ||
-    url.origin === self.location.origin;
+    url.hostname === 'fonts.gstatic.com';
 
   if (cacheFirst) {
     e.respondWith(
@@ -35,6 +40,19 @@ self.addEventListener('fetch', (e) => {
         }
         return res;
       }).catch(() => hit))
+    );
+    return;
+  }
+
+  if (url.origin === self.location.origin) {
+    e.respondWith(
+      fetch(req).then((res) => {
+        if (res.ok) {
+          const copy = res.clone();
+          caches.open(CACHE).then((c) => c.put(req, copy));
+        }
+        return res;
+      }).catch(() => caches.match(req))
     );
     return;
   }
