@@ -1,4 +1,4 @@
-const CACHE = 'mundo-afora-v1';
+const CACHE = 'mundo-afora-v7';
 const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'config.js', 'manifest.json', 'icon.svg'];
 
 self.addEventListener('install', (e) => {
@@ -18,16 +18,19 @@ self.addEventListener('fetch', (e) => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
 
+  // em localhost, sempre busca do servidor para facilitar o desenvolvimento
   if (url.origin === self.location.origin &&
       ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)) {
     e.respondWith(fetch(req));
     return;
   }
 
-  // Mapas e bibliotecas CDN usam cache primeiro.
+  // mapas, bandeiras, fontes e bibliotecas: cache primeiro
   const cacheFirst =
     url.hostname.endsWith('tile.openstreetmap.org') ||
     url.hostname.endsWith('arcgisonline.com') ||
+    url.hostname === 'upload.wikimedia.org' ||
+    url.hostname === 'flagcdn.com' ||
     url.hostname === 'unpkg.com' ||
     url.hostname === 'fonts.gstatic.com';
 
@@ -44,6 +47,7 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
+  // arquivos do próprio app: rede, com cópia em cache para uso offline
   if (url.origin === self.location.origin) {
     e.respondWith(
       fetch(req).then((res) => {

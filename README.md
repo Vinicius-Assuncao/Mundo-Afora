@@ -1,38 +1,91 @@
-# Mundo Afora (versão 1)
+# 🌍 Mundo Afora
 
-App de planejamento de viagens em HTML, CSS e JavaScript puros, instalável no celular (PWA).
+> 🧭 Planeje viagens dia a dia: paradas, trajetos, horários e mapas, com visual pensado para celular e desktop.
 
-## Arquivos
+O **Mundo Afora** é uma aplicação web para montar roteiros de viagem. Você organiza a viagem em dias, adiciona os lugares que quer visitar, define horários e tempo de permanência e escolhe como se deslocar entre cada parada. O trajeto aparece no mapa, e a visão geral mostra o panorama de toda a viagem.
 
-- `index.html`: telas (início, viagem e diálogo)
-- `style.css`: design, responsivo para celular e desktop
-- `app.js`: viagens, dias, paradas, trajetos, ideias, importar/exportar JSON, mapa
-- `config.js`: nome do app e chave da API de trajetos
-- `sw.js`: funcionamento offline (cache do app, mapas visitados e satélite)
-- `manifest.json` e `icon.svg`: instalação no celular
-- `renomear.py`: troca o nome do projeto em todos os lugares
+Tudo funciona no navegador e pode ser instalado no celular como aplicativo. Os dados ficam salvos no próprio aparelho, sem necessidade de conta.
 
-## Testar localmente
+---
 
-Sirva os arquivos por HTTP, por exemplo com `python -m http.server 8000`, e abra `http://localhost:8000`. Em `localhost`, o service worker não usa cópias em cache: cada recarga busca os arquivos no servidor. Se o servidor for parado, a página já aberta continua visível até ser recarregada; depois disso, o navegador não conseguirá abrir o endereço.
+## ✨ Funcionalidades
 
-## Chave da API de trajetos (OpenRouteService)
+- 🏠 **Tela inicial** com as viagens ordenadas pela data de início e cartões com ícone, período e resumo
+- 🌍 **Ícones personalizados** para cada viagem: emojis ou bandeiras de países
+- 🗓️ **Período da viagem** definido por datas, com criação automática de um dia para cada data
+- 🧭 **Visão geral** como tela inicial de cada viagem, com totais, cards dos dias e prévia das paradas
+- 📍 **Paradas com foto e descrição** vindas da Wikipédia, quando disponíveis
+- 🕒 **Horário e tempo de permanência** para cada parada, com aviso quando o horário não comporta o deslocamento
+- 🚶 **Trajetos a pé, de bicicleta ou de carro**, com tempo e distância entre paradas
+- 🔁 **Recálculo de trajetos** por dia ou da viagem inteira, para economizar requisições
+- ↕️ **Ordenação manual** das paradas por arrastar, e transferência de paradas entre dias
+- 💡 **Lista de ideias** para guardar lugares sem dia definido
+- 🗺️ **Mapa** com as paradas numeradas, pré-visualização com foto ao passar o cursor e alternância entre mapa e satélite
+- 🎨 **Dez cores por dia** para organizar o roteiro visualmente
+- 💾 **Exportação e importação** de viagens em JSON, para backup ou para outro aparelho
+- 📱 **Layout responsivo** para celular e desktop e funcionamento offline dos mapas já visitados
 
-1. Crie uma chave gratuita em openrouteservice.org.
-2. No painel, restrinja a chave ao seu domínio (ex.: `SEU-USUARIO.github.io`).
-3. Cole a chave em `config.js`, no campo `ORS_KEY`.
+---
 
-Atenção: qualquer pessoa que abrir o site consegue ver a chave, por isso a restrição por domínio é importante.
+## 🛠️ Tecnologias
 
-## Publicar no GitHub Pages
+- 🌐 **HTML5** para a estrutura das telas
+- 🎨 **CSS3** com variáveis, layout em grid e flexbox
+- ⚡ **JavaScript (ES6+)** puro, sem frameworks
+- 🗺️ **Leaflet** para o mapa, com tiles do OpenStreetMap e imagens de satélite do Esri
+- ↕️ **SortableJS** para ordenar paradas por arrastar
+- 🛣️ **OpenRouteService** para cálculo de trajetos
+- 📍 **Nominatim** (OpenStreetMap) para busca de lugares
+- 📖 **Wikipédia** para descrições e fotos dos lugares
+- 🏳️ **FlagCDN** para as bandeiras
+- 🔧 **Service Worker** para funcionamento offline
 
-1. Crie um repositório público e envie os arquivos para a raiz.
-2. Em Settings > Pages, escolha a branch `main` e a pasta `/ (root)`.
+Não há dependências para instalar nem etapa de build.
 
-## Trocar o nome
+---
 
-    python3 renomear.py "Nome do Projeto" "NomeCurto"
+## 🚀 Hospedagem
 
-## Mapa por satélite
+Aplicação estática, hospedada no GitHub Pages:
 
-Usa as imagens do Esri (ArcGIS World Imagery), sem chave. Use o seletor de camadas no canto superior direito do mapa. Verifique os termos de uso do Esri antes de usar em produção ou com muitos acessos.
+- https://vinicius-assuncao.github.io/Mundo-Afora/
+
+---
+
+## 🗄️ Armazenamento dos dados
+
+Os dados são salvos no `localStorage` do navegador. Não existe conta nem servidor próprio: cada aparelho guarda as próprias viagens.
+
+Para transferir ou fazer backup de uma viagem, use **Exportar** na tela da viagem e **Importar viagem** na tela inicial. O arquivo gerado é um JSON legível.
+
+---
+
+## ⚙️ Configuração
+
+O cálculo de trajetos usa a API do OpenRouteService. A chave é definida no arquivo `config.js`. Como o código é público, a chave deve ser restrita ao domínio da aplicação no painel do provedor.
+
+Sem chave configurada, o roteiro funciona normalmente, mas os trajetos não são calculados.
+
+---
+
+## 📁 Estrutura do projeto
+
+```text
+Mundo-Afora/
+├── index.html      # Telas: início, viagem e diálogo de criação e edição
+├── style.css       # Estilos e layout responsivo
+├── app.js          # Lógica: viagens, dias, paradas, trajetos, mapa e importação
+├── config.js       # Nome do app e chave da API de trajetos
+├── sw.js           # Service worker: cache e funcionamento offline
+├── manifest.json   # Metadados para instalação no celular
+├── icon.svg        # Ícone do aplicativo
+├── LICENSE         # MIT
+└── README.md
+```
+
+---
+
+## 👨‍💻 Autor
+
+**Vinícius Assunção** 🎓
+
