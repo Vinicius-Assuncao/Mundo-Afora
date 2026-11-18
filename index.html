@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Mundo Afora</title>
+  <meta name="theme-color" content="#1f3a5f">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <button id="brandBtn" class="brand" aria-label="Início"><span class="logo">🌍</span><span id="brandName">Roteiros</span></button>
+    <div id="topTitle" class="top-title"></div>
+    <div class="top-actions">
+      <button id="backBtn" class="btn ghost light hidden">← Viagens</button>
+      <button id="editTripBtn" class="btn ghost light hidden">Editar</button>
+      <button id="exportBtn" class="btn ghost light hidden">Exportar</button>
+    </div>
+  </header>
+
+  <!-- TELA INICIAL -->
+  <section id="home" class="view">
+    <div class="hero">
+      <div class="hero-inner">
+        <p class="eyebrow">Planeje do seu jeito</p>
+        <h1>Para onde vamos afora?</h1>
+        <p class="lead">Organize cada dia, cada parada e cada trajeto em um só lugar, mesmo sem internet.</p>
+        <div class="hero-actions">
+          <button id="newTripBtn" class="btn primary big">+ Nova viagem</button>
+          <label class="btn ghost light big">Importar viagem<input type="file" id="importFile" accept="application/json" hidden></label>
+        </div>
+      </div>
+    </div>
+    <div class="container">
+      <h2 class="section-title">Suas viagens</h2>
+      <div id="tripCards" class="cards"></div>
+    </div>
+  </section>
+
+  <!-- VIAGEM -->
+  <section id="trip" class="view hidden">
+    <div id="map"></div>
+    <aside class="panel">
+      <nav id="daysNav" class="days" aria-label="Dias"></nav>
+
+      <div class="card daybox">
+        <div id="dayHead"></div>
+        <div id="summary" class="summary"></div>
+        <div class="row">
+          <button id="recalcDay" class="btn sm">↻ Recalcular dia</button>
+          <button id="recalcTrip" class="btn sm">↻ Recalcular viagem</button>
+        </div>
+        <ol id="stops"></ol>
+      </div>
+
+      <form id="searchForm" class="search">
+        <input id="q" placeholder="Buscar atração ou endereço" aria-label="Buscar">
+        <button class="btn primary">Buscar</button>
+      </form>
+      <ul id="results"></ul>
+
+      <details class="card ideas" open>
+        <summary>Lista de ideias <span id="ideaCount"></span></summary>
+        <ul id="ideas"></ul>
+      </details>
+    </aside>
+  </section>
+
+  <!-- DIÁLOGO DE VIAGEM -->
+  <dialog id="tripDlg">
+    <h2 id="dlgTitle">Nova viagem</h2>
+    <div class="field">
+      <span class="label">Emoji</span>
+      <div id="emojiGrid" class="emojis"></div>
+    </div>
+    <label class="field"><span class="label">Nome</span>
+      <input id="tName" maxlength="40" placeholder="Ex.: Portugal 2027">
+    </label>
+    <div class="grid2">
+      <label class="field"><span class="label">Início</span><input type="date" id="tStart"></label>
+      <label class="field"><span class="label">Fim</span><input type="date" id="tEnd"></label>
+    </div>
+    <div class="dlg-actions">
+      <button id="tDelete" class="btn danger hidden">Excluir</button>
+      <span class="spacer"></span>
+      <button id="tCancel" class="btn">Cancelar</button>
+      <button id="tSave" class="btn primary">Salvar</button>
+    </div>
+  </dialog>
+
+  <div id="toast" class="hidden"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/sortablejs@1.15.2/Sortable.min.js"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
