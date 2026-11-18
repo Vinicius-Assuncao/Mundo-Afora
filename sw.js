@@ -1,4 +1,4 @@
-const CACHE = 'mundo-afora-v7';
+const CACHE = 'mundo-afora-v8';
 const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'config.js', 'manifest.json', 'icon.svg'];
 
 self.addEventListener('install', (e) => {

@@ -1,7 +1,7 @@
 const KEY = 'mundo-afora.v1';
 const $ = (s) => document.querySelector(s);
 
-const EMOJIS = ['🌍','✈️','🏖️','🏔️','🏙️','🗺️','🚗','🚆','⛵','🏕️','🍷','🎒','📸','🌅','🌴','🏛️','🎡','🌋','🐋','🛶','🍜','🌸','❄️','🌵','🎉','💼','🏉','🎨'];
+const EMOJIS = ['🌍','✈️','🏖️','🏔️','🏙️','🗺️','🚗','🚆','⛵','🏕️','🍷','🎒','📸','🌅','🌴','🏛️','🎡','🌋','🐋','🛶','🍜','🌸','❄️','🌵','🎉','💼','⚽','🎨'];
 const FLAGS = [
   ['br','Brasil'],['pt','Portugal'],['es','Espanha'],['fr','França'],['it','Itália'],['de','Alemanha'],
   ['gb','Reino Unido'],['ie','Irlanda'],['nl','Países Baixos'],['ch','Suíça'],['at','Áustria'],['gr','Grécia'],
@@ -179,17 +179,24 @@ function warnings(d) {
 function totals(days) {
   return days.reduce((acc, d) => {
     acc.stops += d.stops.length;
-    for (const s of d.stops) {
+    d.stops.forEach((s, i) => {
       acc.visit += +s.stay || 0;
-      acc.drive += s.legMin || 0;
-      acc.km += s.legKm || 0;
-    }
+      if (i === 0) return;
+      if (s.legMin == null || s.legKm == null) acc.pending++;
+      else {
+        acc.drive += s.legMin;
+        acc.km += s.legKm;
+      }
+    });
     return acc;
-  }, { stops: 0, visit: 0, drive: 0, km: 0 });
+  }, { stops: 0, visit: 0, drive: 0, km: 0, pending: 0 });
 }
+function routeTimeLabel(tot) { return tot.pending ? 'A calcular' : fmt(tot.drive); }
+function routeDistanceLabel(tot) { return tot.pending ? 'A calcular' : `${tot.km.toFixed(1)} km`; }
 
 // ---------- telas ----------
 function show(view) {
+  document.body.classList.toggle('in-trip', view === 'trip');
   $('#home').classList.toggle('hidden', view !== 'home');
   $('#trip').classList.toggle('hidden', view !== 'trip');
   $('#backBtn').classList.toggle('hidden', view === 'home');
@@ -217,13 +224,14 @@ function renderHome() {
     const c1 = t.days[0]?.color || COLORS[0];
     const c2 = t.days[t.days.length - 1]?.color || COLORS[3];
     return `
-    <article class="card trip-card" data-id="${t.id}" tabindex="0" style="--c:${c1};--c2:${c2}">
-      <div class="trip-cover"><div class="trip-icon">${visual(t.emoji || '🌍', 'ico')}</div></div>
-      <button class="btn edit" data-edit="${t.id}" aria-label="Editar viagem">Editar</button>
+    <article class="card trip-card" data-id="${t.id}" tabindex="0" role="group" aria-roledescription="cartão de viagem; pressione Enter para abrir" aria-label="${esc(t.name)}" style="--c:${c1};--c2:${c2}">
+      <div class="trip-cover"><div class="trip-icon">${visual(t.emoji || '🌍', 'ico')}</div><span class="cover-label">SEU ROTEIRO</span></div>
+      <button type="button" class="btn edit" data-edit="${t.id}" aria-label="Editar viagem ${esc(t.name)}">✎ <span>Editar</span></button>
       <div class="trip-body">
         <h3>${esc(t.name)}</h3>
         <p class="dates">${dateRange(t)}</p>
-        <div class="meta"><span class="chip">📅 ${t.days.length} ${t.days.length === 1 ? 'dia' : 'dias'}</span><span class="chip">📍 ${n} ${n === 1 ? 'parada' : 'paradas'}</span></div>
+        <div class="meta"><span class="chip">▦ ${t.days.length} ${t.days.length === 1 ? 'dia' : 'dias'}</span><span class="chip">⌖ ${n} ${n === 1 ? 'parada' : 'paradas'}</span></div>
+        <div class="trip-card-footer"><span>${n ? 'Roteiro em andamento' : 'Pronto para planejar'}</span><b>Abrir roteiro <span aria-hidden="true">→</span></b></div>
       </div>
     </article>`;
   }).join('') || `
@@ -243,6 +251,12 @@ function renderTrip() {
   renderDaysNav(t);
   $('#dayActions').classList.toggle('hidden', overview);
   $('#searchForm').classList.toggle('hidden', overview);
+  $('.search-section').classList.toggle('hidden', overview);
+  $('#recalcDay').disabled = !hasKey();
+  $('#recalcTrip').disabled = !hasKey();
+  $('#routeHelp').textContent = hasKey()
+    ? 'Atualize as estimativas entre as paradas.'
+    : 'Configure a chave do OpenRouteService em config.js para calcular trajetos.';
   $('#results').classList.toggle('hidden', overview);
   $('.ideas').classList.toggle('hidden', overview);
   $('#stops').classList.toggle('hidden', overview);
@@ -267,7 +281,7 @@ function renderDaysNav(t) {
     </button>` + t.days.map((d, i) => `
     <button class="tab ${!overview && i === dayIdx ? 'on' : ''}" data-i="${i}" style="--c:${d.color}" aria-pressed="${!overview && i === dayIdx}">
       <b>${esc(d.name)}</b><small>${d.date ? fmtDate(d.date) : 'sem data'} · ${d.stops.length} ${d.stops.length === 1 ? 'parada' : 'paradas'}</small>
-    </button>`).join('') + `<button class="tab add" data-act="addDay">+ Dia</button>`;
+    </button>`).join('') + `<button type="button" class="tab add" data-act="addDay"><b>＋ Novo dia</b><small>Adicionar ao roteiro</small></button>`;
 }
 
 function renderOverview(t) {
@@ -281,14 +295,14 @@ function renderOverview(t) {
     <div class="overview-stats">
       <div class="stat"><b>${t.days.length}</b><span>dias</span></div>
       <div class="stat"><b>${tot.stops}</b><span>paradas</span></div>
+      <div class="stat"><b>${tot.pending ? 'A calcular' : tot.km.toFixed(1)}</b><span>km de trajeto</span></div>
       <div class="stat"><b>${fmt(tot.visit)}</b><span>visitas</span></div>
-      <div class="stat"><b>${tot.km.toFixed(1)}</b><span>km</span></div>
-    </div>
+      </div>
     <div class="overview-grid">
       ${t.days.map((d, i) => {
         const dt = totals([d]);
         return `
-        <article class="overview-day" style="--c:${d.color}">
+        <article class="overview-day" style="--c:${d.color}" data-day="${i}" role="button" tabindex="0" aria-label="Abrir ${esc(d.name)}">
           <header class="overview-day-head">
             <h3>${esc(d.name)}</h3>
             <small>${d.date ? fmtDate(d.date) : 'sem data'}</small>
@@ -296,8 +310,7 @@ function renderOverview(t) {
           <div class="overview-day-body">
             <div class="summary">
               <span class="chip">${d.stops.length} ${d.stops.length === 1 ? 'parada' : 'paradas'}</span>
-              <span class="chip">${fmt(dt.visit)} visitas</span>
-              <span class="chip">${dt.km.toFixed(1)} km</span>
+              <span class="chip">${routeDistanceLabel(dt)}</span>
             </div>
             ${d.stops.length
               ? `<ol>${d.stops.map((s, j) => `
@@ -311,7 +324,7 @@ function renderOverview(t) {
           </div>
         </article>`;
       }).join('')}
-      <button class="card overview-add" data-act="addDay">+ Adicionar dia</button>
+      <button type="button" class="card overview-add" data-act="addDay">＋ Adicionar dia</button>
     </div>`;
 }
 
@@ -332,9 +345,9 @@ function renderSummary(t) {
   const tot = totals([d]);
   $('#summary').innerHTML = `
     <span class="chip">${d.stops.length} ${d.stops.length === 1 ? 'parada' : 'paradas'}</span>
-    <span class="chip">Visitas: ${fmt(tot.visit)}</span>
-    <span class="chip">Deslocamento: ${fmt(tot.drive)}</span>
-    <span class="chip">${tot.km.toFixed(1)} km</span>`;
+    <span class="chip">No local: ${fmt(tot.visit)}</span>
+    <span class="chip">Deslocamento: ${routeTimeLabel(tot)}</span>
+    <span class="chip">${routeDistanceLabel(tot)}</span>`;
 }
 
 function renderStops(t) {
@@ -363,14 +376,13 @@ function renderStops(t) {
         </div>
         <div class="stop-chips">
           ${s.time ? `<span class="chip time">🕒 ${esc(s.time)}</span>` : ''}
-          <span class="chip">⏱ ${s.stay ?? 60} min</span>
           ${i > 0 ? `<span class="chip leg">${s.legMin != null ? `${MODES[s.transport || 'walk'].label}: ${Math.round(s.legMin)} min · ${s.legKm.toFixed(1)} km` : 'Trajeto não calculado'}</span>` : ''}
         </div>
         <div class="fields">
-          <label>Horário<input type="time" data-f="time" data-id="${s.id}" value="${s.time || ''}"></label>
-          <label>Permanência (min)<input type="number" min="0" step="5" data-f="stay" data-id="${s.id}" value="${s.stay ?? 60}"></label>
-          ${i > 0 ? `<label>Trajeto
-            <select data-f="transport" data-id="${s.id}">
+          <label>Chegada às<input type="time" data-f="time" data-id="${s.id}" value="${s.time || ''}" aria-label="Horário de chegada"></label>
+          <label>Tempo no local (min)<input type="number" min="0" step="5" data-f="stay" data-id="${s.id}" value="${s.stay ?? 60}" aria-label="Tempo de permanência em minutos"></label>
+          ${i > 0 ? `<label>Como chegar
+            <select data-f="transport" data-id="${s.id}" aria-label="Meio de transporte">
               ${Object.entries(MODES).map(([k, m]) => `<option value="${k}" ${k === (s.transport || 'walk') ? 'selected' : ''}>${m.label}</option>`).join('')}
             </select></label>` : ''}
         </div>
@@ -380,8 +392,8 @@ function renderStops(t) {
           <small>Fonte: ${s.url ? `<a href="${esc(s.url)}" target="_blank" rel="noopener">Wikipédia</a>` : 'Wikipédia'} (CC BY-SA)</small>
         </details>` : ''}
         <div class="mv">
-          <select class="mvSel" data-id="${s.id}" aria-label="Mover para outro dia"><option value="">Mover para…</option>${others(dayIdx)}</select>
-          <button class="btn sm" data-act="idea" data-id="${s.id}">Para ideias</button>
+          <select class="mvSel" data-id="${s.id}" aria-label="Mover ${esc(s.name)} para outro dia"><option value="">Mover para outro dia…</option>${others(dayIdx)}</select>
+          <button type="button" class="btn sm" data-act="idea" data-id="${s.id}">Mover para ideias</button>
         </div>
       </div>
     </li>`).join('') || `
@@ -397,15 +409,15 @@ function renderIdeas(t) {
   $('#ideas').innerHTML = t.ideas.map((p) => `
     <li>
       <span>${esc(p.name)}</span>
-      <select aria-label="Dia de destino">${t.days.map((d, j) => `<option value="${j}" ${j === dayIdx ? 'selected' : ''}>${esc(d.name)}</option>`).join('')}</select>
-      <button class="btn sm" data-act="toDay" data-id="${p.id}">Adicionar</button>
+      <select aria-label="Escolha em qual dia adicionar ${esc(p.name)}">${t.days.map((d, j) => `<option value="${j}" ${j === dayIdx ? 'selected' : ''}>${esc(d.name)}</option>`).join('')}</select>
+      <button type="button" class="btn sm" data-act="toDay" data-id="${p.id}">Adicionar ao dia</button>
       <button class="btn sm icon ghost danger" data-act="delIdea" data-id="${p.id}" aria-label="Remover ideia">✕</button>
-    </li>`).join('') || `<li class="empty-line">Sem ideias guardadas. Use “Para ideias” em uma parada ou “Ideias” numa busca.</li>`;
+    </li>`).join('') || `<li class="empty-line">Sua lista está vazia. Use “Mover para ideias” em uma parada ou “Guardar ideia” nos resultados da busca.</li>`;
 }
 
 // ---------- mapa ----------
 const MAP_STYLES = {
-  osm:     { label: 'Padrão (OpenStreetMap)', make: () => tile('https://tile.openstreetmap.org/{z}/{x}/{y}.png', '© OpenStreetMap') },
+  osm:     { label: 'Padrão', make: () => tile('https://tile.openstreetmap.org/{z}/{x}/{y}.png', '© OpenStreetMap') },
   sat:     { label: 'Satélite', make: () => satImagery() },
   satlab:  { label: 'Satélite com nomes', make: () => L.layerGroup([satImagery(), L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: '' })]) },
 };
@@ -564,8 +576,27 @@ function renderPicker() {
   }
 }
 function updateDlgInfo() {
-  const n = isoRange($('#tStart').value, $('#tEnd').value).length;
-  $('#dlgInfo').textContent = n ? `${n} ${n === 1 ? 'dia' : 'dias'} serão criados automaticamente.` : 'Sem datas: a viagem começa com um dia.';
+  const start = $('#tStart').value;
+  const end = $('#tEnd').value;
+  const error = $('#dlgError');
+  $('#tEnd').min = start || '';
+  error.classList.add('hidden');
+  if (end && !start) {
+    $('#dlgInfo').textContent = 'Informe a data de início para definir a data final.';
+    error.textContent = 'A data final precisa de uma data de início.';
+    error.classList.remove('hidden');
+    return;
+  }
+  if (start && end && end < start) {
+    $('#dlgInfo').textContent = 'Corrija o período para continuar.';
+    error.textContent = 'A data final não pode ser anterior à data de início.';
+    error.classList.remove('hidden');
+    return;
+  }
+  const n = start ? isoRange(start, end || start).length : 0;
+  $('#dlgInfo').textContent = n
+    ? `${n} ${n === 1 ? 'dia será criado' : 'dias serão criados'} automaticamente.`
+    : 'Sem datas: a viagem começa com um dia.';
 }
 function openDialog(trip) {
   editingId = trip?.id || null;
@@ -585,7 +616,18 @@ function openDialog(trip) {
 function saveDialog() {
   const name = $('#tName').value.trim() || 'Minha viagem';
   let start = $('#tStart').value, end = $('#tEnd').value;
-  if (start && end && end < start) [start, end] = [end, start];
+  if (end && !start) {
+    $('#dlgError').textContent = 'Informe a data de início antes de definir a data final.';
+    $('#dlgError').classList.remove('hidden');
+    $('#tStart').focus();
+    return;
+  }
+  if (start && end && end < start) {
+    $('#dlgError').textContent = 'A data final não pode ser anterior à data de início.';
+    $('#dlgError').classList.remove('hidden');
+    $('#tEnd').focus();
+    return;
+  }
   if (!start) end = '';
 
   const inTrip = !$('#trip').classList.contains('hidden');
@@ -632,7 +674,9 @@ function exportTrip() {
 }
 async function importTrip(e) {
   try {
-    const t = JSON.parse(await e.target.files[0].text());
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const t = JSON.parse(await file.text());
     if (!Array.isArray(t.days) || !t.name) throw new Error('Arquivo inválido.');
     t.id = uid();
     t.ideas = t.ideas || [];
@@ -659,7 +703,10 @@ $('#tripCards').onclick = (e) => {
   if (card) openTrip(card.dataset.id);
 };
 $('#tripCards').onkeydown = (e) => {
-  if (e.key === 'Enter' && e.target.classList.contains('trip-card')) openTrip(e.target.dataset.id);
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('trip-card')) {
+    e.preventDefault();
+    openTrip(e.target.dataset.id);
+  }
 };
 
 document.querySelectorAll('[data-pt]').forEach((b) => b.onclick = () => { pickerTab = b.dataset.pt; renderPicker(); });
@@ -679,11 +726,13 @@ $('#daysNav').onclick = (e) => {
   const t = cur();
   if (e.target.closest('[data-act="overview"]')) { overview = true; return renderTrip(); }
   if (e.target.closest('[data-act="addDay"]')) {
-    const n = prompt('Nome do dia:', `Dia ${t.days.length + 1}`);
-    if (!n) return;
     const d = newDay(t.days.length);
-    d.name = n.trim() || d.name;
-    t.days.push(d); dayIdx = t.days.length - 1; overview = false; save(); renderTrip();
+    t.days.push(d);
+    dayIdx = t.days.length - 1;
+    overview = false;
+    save();
+    renderTrip();
+    toast('Novo dia adicionado. Edite o nome no topo do dia.', 'ok');
     return;
   }
   const tab = e.target.closest('.tab[data-i]');
@@ -693,8 +742,17 @@ $('#daysNav').onclick = (e) => {
 $('#overviewDays').onclick = (e) => {
   const t = cur();
   if (e.target.closest('[data-act="addDay"]')) return $('#daysNav [data-act="addDay"]').click();
-  const b = e.target.closest('[data-day]'); if (!b) return;
-  dayIdx = +b.dataset.day; overview = false; renderTrip();
+  const card = e.target.closest('.overview-day[data-day]');
+  if (!card) return;
+  dayIdx = +card.dataset.day; overview = false; renderTrip();
+};
+
+$('#overviewDays').onkeydown = (e) => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  const card = e.target.closest('.overview-day[data-day]');
+  if (!card) return;
+  e.preventDefault();
+  dayIdx = +card.dataset.day; overview = false; renderTrip();
 };
 
 $('#dayHead').onclick = (e) => {
@@ -784,7 +842,7 @@ $('#stops').onclick = (e) => {
     const [s] = d.stops.splice(idx, 1);
     fixLegs(d);
     t.ideas.push({ id: s.id, name: s.name, lat: s.lat, lon: s.lon });
-    toast('Guardada nas ideias.', 'ok');
+    toast('Parada movida para a lista de ideias.', 'ok');
     return reroute(d);
   }
 };
@@ -805,17 +863,20 @@ Sortable.create($('#stops'), {
 $('#searchForm').onsubmit = async (e) => {
   e.preventDefault();
   const q = $('#q').value.trim(); if (!q) return;
-  $('#results').innerHTML = '<li class="empty-line">Buscando…</li>';
+  $('#results').innerHTML = '<li class="empty-line loading-results" role="status">Buscando lugares…</li>';
   try {
     lastResults = await searchPlaces(q);
+    const targetDay = cur().days[dayIdx];
     $('#results').innerHTML = lastResults.map((p, i) => `
       <li>
         <span><b>${esc(p.name)}</b><br><small>${esc(p.address)}</small></span>
-        <button class="btn sm primary" data-act="addDay" data-i="${i}">+ Dia</button>
-        <button class="btn sm" data-act="addIdea" data-i="${i}">Ideias</button>
+        <div class="result-actions">
+          <button type="button" class="btn sm primary" data-act="addDay" data-i="${i}" aria-label="Adicionar ${esc(p.name)} a ${esc(targetDay.name)}">Adicionar</button>
+          <button type="button" class="btn sm" data-act="addIdea" data-i="${i}">Guardar ideia</button>
+        </div>
       </li>`).join('') || '<li class="empty-line">Nada encontrado. Tente um nome mais específico.</li>';
   } catch (err) {
-    $('#results').innerHTML = '';
+    $('#results').innerHTML = `<li class="empty-line">Não foi possível buscar agora. Verifique sua conexão e tente novamente.</li>`;
     toast(err.message);
   }
 };
@@ -831,7 +892,7 @@ $('#results').onclick = async (e) => {
 
   if (b.dataset.act === 'addIdea') {
     t.ideas.push({ id: uid(), name: place.name, lat: place.lat, lon: place.lon });
-    save(); renderTrip(); toast('Guardado nas ideias.', 'ok');
+    save(); renderTrip(); toast('Lugar salvo na lista de ideias.', 'ok');
     return;
   }
   const d = t.days[dayIdx];

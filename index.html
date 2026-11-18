@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Mundo Afora</title>
   <meta name="description" content="Planeje viagens dia a dia: paradas, trajetos, horários e mapa, mesmo offline.">
-  <meta name="theme-color" content="#1f3a5f">
+  <meta name="theme-color" content="#173b59">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -19,32 +19,45 @@
     <button id="brandBtn" class="brand" aria-label="Início">
       <span class="logo">🌍</span><span id="brandName">Mundo Afora</span>
     </button>
+    <button id="backBtn" class="btn ghost light trip-back hidden" aria-label="Voltar para viagens">←</button>
     <div id="topTitle" class="top-title"></div>
     <div class="top-actions">
-      <button id="backBtn" class="btn ghost light hidden">← Viagens</button>
       <button id="editTripBtn" class="btn ghost light hidden">Editar</button>
       <button id="exportBtn" class="btn ghost light hidden">Exportar</button>
     </div>
   </header>
 
   <!-- TELA INICIAL -->
-  <section id="home" class="view">
+  <section id="home" class="view" aria-labelledby="homeTitle">
     <div class="hero">
       <div class="hero-inner">
-        <p class="eyebrow">Planeje do seu jeito</p>
-        <h1>Para onde vamos afora?</h1>
-        <p class="lead">Organize cada dia, cada parada e cada trajeto em um só lugar, mesmo sem internet.</p>
-        <div class="hero-actions">
-          <button id="newTripBtn" class="btn primary big">+ Nova viagem</button>
-          <label class="btn ghost light big">Importar viagem<input type="file" id="importFile" accept="application/json" hidden></label>
+        <div class="hero-copy">
+          <p class="eyebrow"><span class="eyebrow-dot"></span> Seu próximo destino começa aqui</p>
+          <h1 id="homeTitle">Viajar começa com um <em>bom plano.</em></h1>
+          <p class="lead">Reúna lugares, organize cada dia e acompanhe seus trajetos em um só lugar. Seu roteiro fica com você, até offline.</p>
+          <div class="hero-actions">
+            <button id="newTripBtn" class="btn primary big">＋ Criar viagem</button>
+            <label class="btn import-action big">Importar roteiro<input type="file" id="importFile" accept="application/json" hidden></label>
+          </div>
+          <p id="heroStats" class="hero-stats" aria-live="polite"></p>
         </div>
-        <p id="heroStats" class="hero-stats"></p>
+        <div class="hero-visual" aria-hidden="true">
+          <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
+          <div class="globe-card"><span class="globe">🌍</span><span class="globe-caption">O mundo é seu destino</span></div>
+          <span class="float-tag tag-plane">✈️ <b>Novos caminhos</b></span>
+          <span class="float-tag tag-pin">📍 <b>Suas próximas paradas</b></span>
+          <span class="spark spark-one">✦</span><span class="spark spark-two">✧</span>
+        </div>
       </div>
+      <div class="hero-bottom" aria-hidden="true"><span>PLANEJE</span><i></i><span>EXPLORE</span><i></i><span>LEMBRE</span></div>
     </div>
     <div class="container">
       <div class="section-head">
-        <h2 class="section-title">Suas viagens</h2>
-        <span class="muted">ordenadas pela data de início</span>
+        <div>
+          <p class="section-kicker">SEU ESPAÇO DE VIAGEM</p>
+          <h2 class="section-title">Suas viagens</h2>
+        </div>
+        <span class="muted">Organizadas pela data de início</span>
       </div>
       <div id="tripCards" class="cards"></div>
     </div>
@@ -60,18 +73,32 @@
         <div id="dayHead"></div>
         <div id="summary" class="summary"></div>
         <div id="overviewDays" class="hidden"></div>
-        <div class="row" id="dayActions">
-          <button id="recalcDay" class="btn sm">↻ Recalcular dia</button>
-          <button id="recalcTrip" class="btn sm">↻ Recalcular viagem</button>
+        <div class="route-tools" id="dayActions">
+          <div class="route-tools-copy">
+            <b>Tempos e trajetos</b>
+            <span id="routeHelp">Atualize as estimativas entre as paradas.</span>
+          </div>
+          <div class="row route-buttons">
+            <button id="recalcDay" class="btn sm" type="button">↻ Atualizar dia</button>
+            <button id="recalcTrip" class="btn sm" type="button">Atualizar viagem</button>
+          </div>
         </div>
         <ol id="stops"></ol>
       </div>
 
-      <form id="searchForm" class="search">
-        <input id="q" placeholder="Buscar atração, cidade ou endereço" aria-label="Buscar">
-        <button class="btn primary">Buscar</button>
-      </form>
-      <ul id="results"></ul>
+      <section class="search-section" aria-labelledby="searchTitle">
+        <div class="search-section-head">
+          <div>
+            <h3 id="searchTitle"><span aria-hidden="true">＋</span> Adicionar lugares</h3>
+            <p>Busque atrações, cidades ou endereços para montar seu dia.</p>
+          </div>
+        </div>
+        <form id="searchForm" class="search">
+          <input id="q" placeholder="Ex.: Coliseu, Roma" aria-label="Buscar atração, cidade ou endereço">
+          <button class="btn primary" type="submit">Buscar</button>
+        </form>
+      </section>
+      <ul id="results" aria-live="polite" aria-label="Resultados da busca"></ul>
 
       <details class="card ideas" open>
         <summary>Lista de ideias <span id="ideaCount"></span></summary>
@@ -104,7 +131,8 @@
       <label class="field"><span class="label">Início</span><input type="date" id="tStart"></label>
       <label class="field"><span class="label">Fim</span><input type="date" id="tEnd"></label>
     </div>
-    <p id="dlgInfo" class="dlg-info"></p>
+    <p id="dlgInfo" class="dlg-info" role="status"></p>
+    <p id="dlgError" class="dlg-error hidden" role="alert"></p>
 
     <div class="dlg-actions">
       <button id="tDelete" class="btn danger hidden">Excluir</button>
