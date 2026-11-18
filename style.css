@@ -495,6 +495,16 @@ details.info small { color: var(--muted); display: block; margin-top: 6px; }
     linear-gradient(145deg, transparent 42%, rgba(61,122,79,.22) 43%, rgba(61,122,79,.22) 48%, transparent 49%),
     linear-gradient(35deg, #dcebd7 20%, #f1ead8 21%, #f1ead8 52%, #c8ddeb 53%);
 }
+.map-preview.light {
+  background:
+    linear-gradient(135deg, transparent 42%, rgba(117,153,119,.55) 43%, rgba(117,153,119,.55) 49%, transparent 50%),
+    linear-gradient(35deg, #e8eee7 18%, #f8f7f2 19%, #f8f7f2 54%, #dce8ef 55%);
+}
+.map-preview.dark {
+  background:
+    linear-gradient(135deg, transparent 42%, rgba(100,139,119,.8) 43%, rgba(100,139,119,.8) 49%, transparent 50%),
+    linear-gradient(35deg, #263746 18%, #344654 19%, #344654 54%, #1c2934 55%);
+}
 .map-preview.sat,
 .map-preview.satlab {
   background:

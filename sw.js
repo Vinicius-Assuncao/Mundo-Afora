@@ -1,4 +1,4 @@
-const CACHE = 'mundo-afora-v8';
+const CACHE = 'mundo-afora-v9';
 const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'config.js', 'manifest.json', 'icon.svg'];
 
 self.addEventListener('install', (e) => {
@@ -29,6 +29,7 @@ self.addEventListener('fetch', (e) => {
   const cacheFirst =
     url.hostname.endsWith('tile.openstreetmap.org') ||
     url.hostname.endsWith('arcgisonline.com') ||
+    url.hostname.endsWith('cartocdn.com') ||
     url.hostname === 'upload.wikimedia.org' ||
     url.hostname === 'flagcdn.com' ||
     url.hostname === 'unpkg.com' ||

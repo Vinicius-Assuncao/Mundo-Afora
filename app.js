@@ -418,11 +418,20 @@ function renderIdeas(t) {
 // ---------- mapa ----------
 const MAP_STYLES = {
   osm:     { label: 'Padrão', make: () => tile('https://tile.openstreetmap.org/{z}/{x}/{y}.png', '© OpenStreetMap') },
+  light:   { label: 'Limpo', make: () => cartoTile('rastertiles/voyager') },
+  dark:    { label: 'Escuro', make: () => cartoTile('dark_all') },
   sat:     { label: 'Satélite', make: () => satImagery() },
   satlab:  { label: 'Satélite com nomes', make: () => L.layerGroup([satImagery(), L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: '' })]) },
 };
 function tile(url, attribution, subdomains = 'abc') {
   return L.tileLayer(url, { maxZoom: 20, subdomains, attribution });
+}
+function cartoTile(style) {
+  const key = CONFIG.CARTO_KEY ? `?key=${encodeURIComponent(CONFIG.CARTO_KEY)}` : '';
+  return L.tileLayer(`https://{s}.basemaps.cartocdn.com/${style}/{z}/{x}/{y}{r}.png${key}`, {
+    maxZoom: 20, subdomains: 'abcd',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>',
+  });
 }
 function satImagery() {
   return L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
