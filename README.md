@@ -20,7 +20,7 @@ Tudo funciona no navegador e pode ser instalado no celular como aplicativo. Use 
 - 🔁 **Recálculo de trajetos** por dia ou da viagem inteira, para economizar requisições
 - ↕️ **Ordenação manual** das paradas por arrastar, e transferência de paradas entre dias
 - 💡 **Lista de ideias** para guardar lugares sem dia definido
-- 🗺️ **Mapa** com as paradas numeradas, pré-visualização com foto e cinco estilos: Padrão, Limpo, Escuro, Satélite e Satélite com nomes
+- 🗺️ **Mapa** com as paradas numeradas, pré-visualização com foto e cinco estilos: Padrão, Limpo, Escuro, Satélite e Satélite híbrido
 - 🎨 **Dez cores por dia** para organizar o roteiro visualmente
 - 💾 **Exportação e importação** de viagens em JSON, para backup ou para outro aparelho
 - 📱 **Layout responsivo** para celular e desktop e funcionamento offline dos mapas já visitados

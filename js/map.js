@@ -4,7 +4,7 @@ const MAP_STYLES = {
   light:  { label: 'Limpo', make: () => cartoTile('rastertiles/voyager') },
   dark:   { label: 'Escuro', make: () => cartoTile('dark_all') },
   sat:    { label: 'Satélite', make: () => satImagery() },
-  satlab: { label: 'Satélite com nomes', make: () => L.layerGroup([
+  satlab: { label: 'Satélite híbrido', make: () => L.layerGroup([
     satImagery(),
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: '' }),
   ]) },
