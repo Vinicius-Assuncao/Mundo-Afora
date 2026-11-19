@@ -21,6 +21,7 @@
   <link rel="stylesheet" href="css/dialogs.css">
   <link rel="stylesheet" href="css/responsive.css">
   <link rel="stylesheet" href="css/cloud.css">
+  <link rel="stylesheet" href="css/layout-refinements.css">
 </head>
 <body>
   <header class="top">
@@ -30,8 +31,8 @@
     <button id="backBtn" class="btn ghost light trip-back hidden" aria-label="Voltar para viagens"><span class="material-symbols-outlined" aria-hidden="true">keyboard_arrow_left</span></button>
     <div id="topTitle" class="top-title"></div>
     <div class="trip-actions">
-      <button id="editTripBtn" class="btn ghost light hidden"><span class="material-symbols-outlined" aria-hidden="true">edit</span> Editar</button>
-      <button id="exportBtn" class="btn ghost light hidden"><span class="material-symbols-outlined" aria-hidden="true">download</span> Exportar</button>
+      <button id="editTripBtn" class="btn ghost light hidden" aria-label="Editar viagem" title="Editar viagem"><span class="material-symbols-outlined" aria-hidden="true">edit</span><span class="action-label">Editar</span></button>
+      <button id="exportBtn" class="btn ghost light hidden" aria-label="Exportar viagem" title="Exportar viagem"><span class="material-symbols-outlined" aria-hidden="true">download</span><span class="action-label">Exportar</span></button>
     </div>
     <div class="top-actions">
       <span id="syncStatus" class="sync-status hidden" aria-live="polite"></span>
@@ -79,8 +80,16 @@
 
   <!-- VIAGEM -->
   <section id="trip" class="view hidden">
-    <div id="map"></div>
-    <aside class="panel">
+    <div class="layout-toolbar">
+      <div class="layout-switch" role="group" aria-label="Modo de visualização do roteiro">
+        <button type="button" data-layout="map" aria-label="Mostrar somente o mapa" title="Mapa" aria-pressed="false"><span class="material-symbols-outlined" aria-hidden="true">map</span><span class="layout-label">Mapa</span></button>
+        <button type="button" data-layout="split" aria-label="Dividir mapa e detalhes" title="Mapa e detalhes" aria-pressed="true"><span class="material-symbols-outlined" aria-hidden="true">splitscreen_right</span><span class="layout-label">Dividido</span></button>
+        <button type="button" data-layout="list" aria-label="Mostrar somente os detalhes" title="Detalhes" aria-pressed="false"><span class="material-symbols-outlined" aria-hidden="true">format_list_bulleted</span><span class="layout-label">Detalhes</span></button>
+      </div>
+    </div>
+    <div class="trip-workspace">
+      <div id="map"></div>
+      <aside class="panel">
       <nav id="daysNav" class="days" aria-label="Visão geral e dias"></nav>
 
       <div class="card daybox">
@@ -108,7 +117,8 @@
         <summary>Lista de ideias <span id="ideaCount"></span><span class="material-symbols-outlined idea-chevron" aria-hidden="true">keyboard_arrow_down</span></summary>
         <ul id="ideas"></ul>
       </details>
-    </aside>
+      </aside>
+    </div>
   </section>
   </main>
 

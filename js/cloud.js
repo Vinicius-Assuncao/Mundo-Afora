@@ -47,12 +47,15 @@ const Cloud = (() => {
       icon.setAttribute('aria-hidden', 'true');
       icon.textContent = 'logout';
       authButton.append(icon);
+      authButton.setAttribute('aria-label', 'Sair da conta');
+      authButton.title = 'Sair da conta';
     } else {
       authButton.textContent = 'Entrar com Google';
+      authButton.setAttribute('aria-label', 'Entrar com Google');
     }
     authButton.classList.toggle('is-signout', on);
     authButton.classList.toggle('is-signin', !on);
-    authButton.title = on ? `Conectado como ${session.user.email}` : '';
+    if (on) authButton.title = 'Sair da conta';
     const banner = $('#cloudBanner');
     if (banner) banner.classList.toggle('hidden', on);
     setStatus(on ? 'pending' : '');
@@ -196,7 +199,7 @@ const Cloud = (() => {
 
   function init() {
     if (!enabled()) {
-      ['#authBtn', '#accountEmail', '#syncStatus'].forEach((s) => $(s).classList.add('hidden'));
+      ['#authBtn', '#accountEmail', '#syncStatus', '.top-actions'].forEach((selector) => $(selector).classList.add('hidden'));
       return;
     }
     sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY, {

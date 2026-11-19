@@ -81,3 +81,84 @@
   .swatches { gap: 7px; }
   .sw { width: 23px; height: 23px; }
 }
+
+/* Alternância entre mapa, detalhes e divisão. */
+.view#trip { position: relative; }
+.layout-switch {
+  position: absolute;
+  z-index: 500;
+  top: 12px;
+  left: 12px;
+  display: inline-flex;
+  gap: 3px;
+  padding: 4px;
+  border: 1px solid rgba(220, 230, 237, .9);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, .94);
+  box-shadow: 0 3px 14px rgba(20, 48, 72, .16);
+  backdrop-filter: blur(10px);
+}
+.layout-switch button {
+  min-height: 38px;
+  padding: 7px 10px;
+  gap: 6px;
+  border: 0;
+  border-radius: 9px;
+  color: #526778;
+  background: transparent;
+  font-size: .78rem;
+}
+.layout-switch button:hover { transform: none; box-shadow: none; background: #eef3f6; }
+.layout-switch button.active { color: #fff; background: #245d72; box-shadow: 0 2px 6px rgba(26, 68, 86, .2); }
+.layout-switch .material-symbols-outlined { font-size: 1.15rem; }
+.layout-map #map { flex: 1 1 100%; width: 100%; height: auto; min-height: 0; }
+.layout-map .panel, .layout-list #map { display: none !important; }
+.layout-list .panel { width: 100%; flex: 1 1 100%; height: 100%; border: 0; }
+
+@media (min-width: 900px) {
+  .view#trip { height: calc(100vh - 64px); min-height: 0; }
+  .layout-split #map { flex: 1 1 auto; min-width: 0; }
+  .layout-split .panel { flex: 0 0 clamp(440px, 42vw, 770px); width: auto; }
+  .layout-list .panel { width: 100%; }
+}
+@media (max-width: 899px) {
+  .view#trip { min-height: calc(100vh - 58px); }
+  .layout-map #map { height: calc(100vh - 58px); min-height: 0; }
+  .layout-list .panel { min-height: calc(100vh - 58px); }
+  .layout-switch { top: 10px; left: 10px; }
+}
+@media (max-width: 680px) {
+  .top-actions { gap: 3px; padding: 3px; border-radius: 11px; }
+  .sync-status { width: 28px; min-height: 30px; flex-basis: 28px; }
+  body .account-email { max-width: 24vw; min-height: 30px; padding: 4px 5px; border: 0; background: transparent; font-size: .65rem; }
+  #authBtn.is-signin, #authBtn.is-signout { min-height: 34px; padding: 6px 8px; font-size: .72rem; }
+  body.in-trip .trip-actions .btn { width: 36px; height: 36px; min-width: 36px; padding: 0; }
+  body.in-trip .trip-actions .action-label { display: none; }
+  body.in-trip .trip-actions .material-symbols-outlined { font-size: 1.2rem; }
+  .layout-switch { gap: 2px; padding: 3px; }
+  .layout-switch button { min-width: 40px; min-height: 42px; padding: 7px; }
+  .layout-switch .layout-label { display: inline; }
+  .layout-switch .material-symbols-outlined { font-size: 1.3rem; }
+  /* Alvos de toque consistentes, inclusive nos controles gerados pelo JS. */
+  .panel .btn.icon { min-width: 40px; min-height: 40px; padding: 7px; }
+  .days { padding-top: 6px; }
+  .tab { min-height: 68px; }
+  .stop-body { padding: 12px 10px 13px 15px; }
+  .sh { gap: 7px; }
+  .sh .btn { flex: 0 0 auto; }
+  .fields { grid-template-columns: 1fr 1fr; }
+  .result-actions { display: flex; flex-wrap: wrap; gap: 7px; }
+  .result-actions .btn { min-height: 42px; }
+}
+@media (max-width: 390px) {
+  body.in-trip .top { gap: 4px; }
+  body.in-trip .top-actions { margin-left: auto; }
+  body.in-trip .account-email { display: none !important; }
+  body.in-trip .top-actions .btn { min-height: 34px; }
+  .layout-switch button { min-width: 38px; }
+  .panel { padding: 10px; }
+  .daybox { padding: 12px; }
+  .fields { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 899px) { .layout-list .panel { padding-top: 62px; } }

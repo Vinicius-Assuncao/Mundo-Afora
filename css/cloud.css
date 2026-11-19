@@ -67,3 +67,46 @@
 @media (prefers-reduced-motion: reduce) {
   .sync-status.pending .material-symbols-outlined { animation: none; }
 }
+
+/* Cabeçalho de conta: uma única linguagem visual, sem etiquetas concorrentes. */
+.top-actions {
+  align-items: center;
+  gap: 8px;
+  padding: 5px;
+  border: 1px solid rgba(226, 239, 244, .2);
+  border-radius: 14px;
+  background: rgba(8, 31, 48, .22);
+}
+.sync-status {
+  flex: 0 0 32px;
+  width: 32px;
+  min-height: 32px;
+  border: 0;
+  border-radius: 10px;
+  color: #c9e6dc;
+  background: rgba(201, 230, 220, .1);
+}
+.sync-status.synced { color: #c7eadb; background: rgba(104, 177, 145, .17); }
+.sync-status.pending { color: #f3d6a1; background: rgba(213, 166, 91, .16); }
+.account-email {
+  min-height: 32px;
+  max-width: 190px;
+  padding: 5px 10px;
+  border: 0;
+  border-radius: 9px;
+  color: rgba(244, 249, 250, .88);
+  background: transparent;
+  font-size: .76rem;
+  font-weight: 500;
+}
+#authBtn.is-signin,
+#authBtn.is-signout {
+  min-height: 34px;
+  padding: 7px 12px;
+  border: 1px solid rgba(235, 244, 246, .22);
+  border-radius: 10px;
+  color: #f5fafb;
+  background: rgba(255, 255, 255, .1);
+}
+#authBtn.is-signin:hover,
+#authBtn.is-signout:hover { background: rgba(255, 255, 255, .19); border-color: rgba(235, 244, 246, .38); }

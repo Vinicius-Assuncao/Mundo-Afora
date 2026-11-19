@@ -4,6 +4,26 @@ $('#backBtn').onclick = goHome;
 $('#newTripBtn').onclick = () => openDialog(null);
 $('#editTripBtn').onclick = () => openDialog(cur());
 $('#exportBtn').onclick = exportTrip;
+
+// Alternância entre mapa, detalhes e visualização dividida.
+const LAYOUT_KEY = 'mundo-afora.layout';
+function setTripLayout(mode, persist = true) {
+  const valid = ['map', 'list', 'split'].includes(mode) ? mode : 'split';
+  const trip = $('#trip');
+  trip.classList.remove('layout-map', 'layout-list', 'layout-split');
+  trip.classList.add(`layout-${valid}`);
+  document.querySelectorAll('[data-layout]').forEach((button) => {
+    const active = button.dataset.layout === valid;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-pressed', String(active));
+  });
+  if (persist) localStorage.setItem(LAYOUT_KEY, valid);
+  requestAnimationFrame(() => { if (map) map.invalidateSize({ animate: false }); });
+}
+document.querySelectorAll('[data-layout]').forEach((button) => {
+  button.addEventListener('click', () => setTripLayout(button.dataset.layout));
+});
+setTripLayout(localStorage.getItem(LAYOUT_KEY) || 'split', false);
 $('#importFile').onchange = importTrip;
 
 $('#tripCards').onclick = (e) => {
