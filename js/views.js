@@ -240,6 +240,9 @@ function renderStops(t) {
         <div class="sh">
           <span class="num">${i + 1}</span>
           <b>${esc(s.name)}</b>
+          <button type="button" class="stop-drag-handle" aria-label="Arrastar ${esc(s.name)} para reordenar" title="Arrastar para reordenar">
+            <span class="material-symbols-outlined" aria-hidden="true">drag_indicator</span>
+          </button>
           <button class="btn sm icon ghost danger" data-act="del" data-id="${s.id}" aria-label="Remover parada"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>
         </div>
         <div class="stop-chips">

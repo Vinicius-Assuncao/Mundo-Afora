@@ -177,7 +177,7 @@ $('#stops').onclick = (e) => {
 
 Sortable.create($('#stops'), {
   animation: 160,
-  handle: '.sh',
+  handle: '.stop-drag-handle',
   ghostClass: 'drag-ghost',
   onEnd() {
     const d = cur().days[dayIdx];

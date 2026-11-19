@@ -90,8 +90,25 @@ ol#stops { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
   font-size: 2rem; color: var(--marrom);
 }
 .stop-body { padding: 12px 14px 14px 18px; }
-.sh { display: flex; align-items: center; gap: 10px; cursor: grab; }
+.sh { display: flex; align-items: center; gap: 10px; }
 .sh b { flex: 1; color: var(--azul-e); font-size: 1rem; line-height: 1.25; }
+.stop-drag-handle {
+  flex: 0 0 auto;
+  padding: 5px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: grab;
+  touch-action: none;
+}
+.stop-drag-handle:hover {
+  transform: none;
+  box-shadow: none;
+  background: #f1efe7;
+  color: var(--azul-e);
+}
+.stop-drag-handle:active { cursor: grabbing; }
+.stop-drag-handle .material-symbols-outlined { font-size: 1.35rem; }
 .num {
   width: 28px; height: 28px; border-radius: 50%;
   color: #fff; font-weight: 800; font-size: .85rem;
