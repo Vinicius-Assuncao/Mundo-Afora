@@ -99,13 +99,13 @@ function renderHome() {
     const c2 = t.days[t.days.length - 1]?.color || COLORS[3];
     return `
     <article class="card trip-card" data-id="${t.id}" tabindex="0" role="group" aria-roledescription="cartão de viagem; pressione Enter para abrir" aria-label="${esc(t.name)}" style="--c:${c1};--c2:${c2}">
-      <div class="trip-cover"><div class="trip-icon">${visual(t.emoji || '🌍', 'ico')}</div><span class="cover-label">SEU ROTEIRO</span></div>
-      <button type="button" class="btn edit" data-edit="${t.id}" aria-label="Editar viagem ${esc(t.name)}">✎ <span>Editar</span></button>
+      <div class="trip-cover"><div class="trip-icon">${!t.emoji || t.emoji === '🌍' ? '<img class="trip-default-icon" src="icon.png" alt="">' : visual(t.emoji, 'ico')}</div><span class="cover-label">SEU ROTEIRO</span></div>
+      <button type="button" class="btn edit" data-edit="${t.id}" aria-label="Editar viagem ${esc(t.name)}"><span class="material-symbols-outlined" aria-hidden="true">edit</span><span>Editar</span></button>
       <div class="trip-body">
         <h3>${esc(t.name)}</h3>
         <p class="dates">${dateRange(t)}</p>
-        <div class="meta"><span class="chip">▦ ${t.days.length} ${t.days.length === 1 ? 'dia' : 'dias'}</span><span class="chip">⌖ ${n} ${n === 1 ? 'parada' : 'paradas'}</span></div>
-        <div class="trip-card-footer"><span>${n ? 'Roteiro em andamento' : 'Pronto para planejar'}</span><b>Abrir roteiro <span aria-hidden="true">→</span></b></div>
+        <div class="meta"><span class="chip"><span class="material-symbols-outlined" aria-hidden="true">calendar_month</span> ${t.days.length} ${t.days.length === 1 ? 'dia' : 'dias'}</span><span class="chip"><span class="material-symbols-outlined" aria-hidden="true">place</span> ${n} ${n === 1 ? 'parada' : 'paradas'}</span></div>
+        <div class="trip-card-footer"><span>${n ? 'Roteiro em andamento' : 'Pronto para planejar'}</span><b>Abrir roteiro <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></b></div>
       </div>
     </article>`;
   }).join('') || `
@@ -113,7 +113,7 @@ function renderHome() {
       <div class="big-emoji">🧭</div>
       <p><b>Nenhuma viagem ainda.</b></p>
       <p>Crie a primeira e comece a montar o seu roteiro.</p>
-      <button class="btn primary" data-new>+ Nova viagem</button>
+      <button class="btn primary" data-new><span class="material-symbols-outlined" aria-hidden="true">add</span> Nova viagem</button>
     </div>`;
 }
 
@@ -123,14 +123,8 @@ function renderTrip() {
   if (dayIdx >= t.days.length) dayIdx = 0;
   $('#topTitle').innerHTML = `${visual(t.emoji || '🌍', 'emo')}<span>${esc(t.name)}</span>`;
   renderDaysNav(t);
-  $('#dayActions').classList.toggle('hidden', overview);
   $('#searchForm').classList.toggle('hidden', overview);
   $('.search-section').classList.toggle('hidden', overview);
-  $('#recalcDay').disabled = !hasKey();
-  $('#recalcTrip').disabled = !hasKey();
-  $('#routeHelp').textContent = hasKey()
-    ? 'Atualize as estimativas entre as paradas.'
-    : 'Configure a chave do OpenRouteService em config.js para calcular trajetos.';
   $('#results').classList.toggle('hidden', overview);
   $('.ideas').classList.toggle('hidden', overview);
   $('#stops').classList.toggle('hidden', overview);
@@ -155,7 +149,7 @@ function renderDaysNav(t) {
     </button>` + t.days.map((d, i) => `
     <button class="tab ${!overview && i === dayIdx ? 'on' : ''}" data-i="${i}" style="--c:${d.color}" aria-pressed="${!overview && i === dayIdx}">
       <b>${esc(d.name)}</b><small>${d.date ? fmtDate(d.date) : 'sem data'} · ${d.stops.length} ${d.stops.length === 1 ? 'parada' : 'paradas'}</small>
-    </button>`).join('') + `<button type="button" class="tab add" data-act="addDay"><b>＋ Novo dia</b><small>Adicionar ao roteiro</small></button>`;
+    </button>`).join('') + `<button type="button" class="tab add" data-act="addDay"><b><span class="material-symbols-outlined" aria-hidden="true">add</span> Novo dia</b><small>Adicionar ao roteiro</small></button>`;
 }
 
 function renderOverview(t) {
@@ -167,10 +161,10 @@ function renderOverview(t) {
     <p class="dates" style="margin-top:4px">${dateRange(t)}</p>`;
   $('#overviewDays').innerHTML = `
     <div class="overview-stats">
-      <div class="stat"><b>${t.days.length}</b><span>dias</span></div>
-      <div class="stat"><b>${tot.stops}</b><span>paradas</span></div>
-      <div class="stat"><b>${tot.pending ? 'A calcular' : tot.km.toFixed(1)}</b><span>km de trajeto</span></div>
-      <div class="stat"><b>${fmt(tot.visit)}</b><span>visitas</span></div>
+      <div class="stat"><b><span class="material-symbols-outlined" aria-hidden="true">calendar_month</span> ${t.days.length}</b><span>dias</span></div>
+      <div class="stat"><b><span class="material-symbols-outlined" aria-hidden="true">place</span> ${tot.stops}</b><span>paradas</span></div>
+      <div class="stat"><b><span class="material-symbols-outlined" aria-hidden="true">route</span> ${tot.pending ? 'A calcular' : tot.km.toFixed(1)}</b><span>km de trajeto</span></div>
+      <div class="stat"><b><span class="material-symbols-outlined" aria-hidden="true">schedule</span> ${fmt(tot.visit)}</b><span>visitas</span></div>
       </div>
     <div class="overview-grid">
       ${t.days.map((d, i) => {
@@ -194,11 +188,11 @@ function renderOverview(t) {
                     ${s.time ? `<span class="t">${esc(s.time)}</span>` : ''}
                   </li>`).join('')}</ol>`
               : '<p class="empty-line">Nenhuma parada neste dia.</p>'}
-            <button class="btn sm" data-day="${i}">Abrir dia →</button>
+            <button class="btn sm" data-day="${i}">Abrir dia <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button>
           </div>
         </article>`;
       }).join('')}
-      <button type="button" class="card overview-add" data-act="addDay">＋ Adicionar dia</button>
+      <button type="button" class="card overview-add" data-act="addDay"><span class="material-symbols-outlined" aria-hidden="true">add</span> Adicionar dia</button>
     </div>`;
 }
 
@@ -246,7 +240,7 @@ function renderStops(t) {
         <div class="sh">
           <span class="num">${i + 1}</span>
           <b>${esc(s.name)}</b>
-          <button class="btn sm icon ghost danger" data-act="del" data-id="${s.id}" aria-label="Remover parada">✕</button>
+          <button class="btn sm icon ghost danger" data-act="del" data-id="${s.id}" aria-label="Remover parada"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>
         </div>
         <div class="stop-chips">
           ${s.time ? `<span class="chip time">🕒 ${esc(s.time)}</span>` : ''}
@@ -285,7 +279,7 @@ function renderIdeas(t) {
       <span>${esc(p.name)}</span>
       <select aria-label="Escolha em qual dia adicionar ${esc(p.name)}">${t.days.map((d, j) => `<option value="${j}" ${j === dayIdx ? 'selected' : ''}>${esc(d.name)}</option>`).join('')}</select>
       <button type="button" class="btn sm" data-act="toDay" data-id="${p.id}">Adicionar ao dia</button>
-      <button class="btn sm icon ghost danger" data-act="delIdea" data-id="${p.id}" aria-label="Remover ideia">✕</button>
+      <button class="btn sm icon ghost danger" data-act="delIdea" data-id="${p.id}" aria-label="Remover ideia"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>
     </li>`).join('') || `<li class="empty-line">Sua lista está vazia. Use “Mover para ideias” em uma parada ou “Guardar ideia” nos resultados da busca.</li>`;
 }
 

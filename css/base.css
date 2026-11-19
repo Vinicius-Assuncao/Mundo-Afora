@@ -21,6 +21,19 @@
 
 * { box-sizing: border-box; }
 html, body { height: 100%; }
+.material-symbols-outlined {
+  font-family: "Material Symbols Outlined";
+  font-weight: normal;
+  font-style: normal;
+  font-size: 1.2em;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
+  direction: ltr;
+  -webkit-font-feature-settings: "liga";
+  -webkit-font-smoothing: antialiased;
+}
 body {
   margin: 0;
   font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -95,7 +108,7 @@ input:focus, select:focus { border-color: var(--azul); box-shadow: 0 0 0 3px rgb
   color: #fff; font-weight: 800; font-size: 1.1rem; padding: 0; gap: 8px; letter-spacing: -.01em;
 }
 .brand:hover { transform: none; }
-.logo { font-size: 1.4rem; }
+.logo { width: 1.4rem; height: 1.4rem; object-fit: contain; }
 .top-title {
   flex: 1; text-align: center; font-weight: 600; opacity: .96;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -120,6 +133,7 @@ input:focus, select:focus { border-color: var(--azul); box-shadow: 0 0 0 3px rgb
   line-height: 1;
 }
 .trip-back:hover { border-color: rgba(255,255,255,.48); }
+.trip-back .material-symbols-outlined { font-size: 1.2rem; }
 .top-title img.flag, .top-title .emo { font-size: 1.2rem; }
 
 

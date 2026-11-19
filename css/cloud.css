@@ -1,17 +1,62 @@
 /* ---------- nuvem: status de sincronização, login e banner ---------- */
 .sync-status {
+  flex: 0 0 30px;
+  width: 30px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   min-height: 30px;
-  line-height: 1;
-  font-size: .75rem; font-weight: 600; color: #fff;
-  padding: 5px 10px; border-radius: 999px;
-  background: rgba(255,255,255,.14);
-  max-width: 230px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 7px;
 }
-.sync-status.ok { background: rgba(120, 220, 160, .28); }
-.sync-status.err { background: rgba(255, 170, 120, .32); }
+.sync-status.synced {
+  color: #a9d8ff;
+  border-color: rgba(116, 182, 232, .5);
+  background: rgba(40, 119, 181, .3);
+}
+.sync-status.pending {
+  color: #ffc078;
+  border-color: rgba(241, 168, 82, .5);
+  background: rgba(193, 111, 29, .24);
+}
+.sync-status.pending .material-symbols-outlined { animation: sync-spin 1s linear infinite; }
+@keyframes sync-spin { to { transform: rotate(360deg); } }
+.account-email {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  max-width: 210px;
+  overflow: hidden;
+  padding: 5px 10px;
+  border: 1px solid rgba(132, 197, 149, .48);
+  border-radius: 7px;
+  color: #d8f1df;
+  background: rgba(47, 126, 72, .3);
+  font-size: .75rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 0 1 auto;
+}
+#authBtn.is-signin {
+  color: #e8f4eb;
+  border-color: rgba(142, 194, 154, .48);
+  background: rgba(48, 119, 72, .48);
+}
+#authBtn.is-signin:hover {
+  border-color: rgba(166, 211, 176, .65);
+  background: rgba(57, 139, 83, .62);
+}
+#authBtn.is-signout {
+  color: #ffe2df;
+  border-color: rgba(235, 145, 136, .4);
+  background: rgba(180, 67, 63, .2);
+}
+#authBtn.is-signout:hover {
+  border-color: rgba(244, 170, 161, .55);
+  background: rgba(195, 83, 76, .32);
+}
 .cloud-banner {
   display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
   margin: 0 0 20px; padding: 16px 18px;
@@ -19,4 +64,6 @@
 }
 .cloud-banner b { display: block; color: var(--azul-e); margin-bottom: 2px; }
 .cloud-banner span { color: var(--muted); font-size: .9rem; }
-@media (max-width: 720px) { .sync-status { display: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .sync-status.pending .material-symbols-outlined { animation: none; }
+}

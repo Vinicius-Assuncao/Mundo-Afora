@@ -82,9 +82,6 @@ $('#dayHead').onchange = (e) => {
   save(); renderTrip();
 };
 
-$('#recalcDay').onclick = () => withBusy(() => routeDay(cur().days[dayIdx]), 'Dia recalculado.');
-$('#recalcTrip').onclick = () => withBusy(async () => { for (const d of cur().days) await routeDay(d); }, 'Viagem recalculada.');
-
 $('#stops').addEventListener('change', (e) => {
   const el = e.target, t = cur(), d = t.days[dayIdx];
   if (el.classList.contains('mvSel')) {

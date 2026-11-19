@@ -27,6 +27,10 @@
   .panel { padding: 12px; }
 }
 @media (max-width: 680px) {
+  .top { gap: 5px; padding-right: 10px; padding-left: 10px; }
+  body .account-email { max-width: 20vw; padding: 5px 7px; font-size: .68rem; }
+  .top-actions { gap: 3px; }
+  .top-actions .btn { padding: 7px 6px; font-size: .7rem; }
   body.in-trip .view#trip { min-height: calc(100vh - 58px); }
   #home .hero { padding: 0 14px; }
   #home .hero-inner {
@@ -52,10 +56,6 @@
   body.in-trip .top-actions { gap: 3px; }
   body.in-trip .top-actions .btn { padding: 7px 7px; font-size: .72rem; }
   #map { height: 32vh; min-height: 220px; }
-  .route-tools { align-items: flex-start; }
-  .route-tools-copy { flex: 1 1 100%; }
-  .route-buttons { width: 100%; }
-  .route-buttons .btn { flex: 1; }
   .search-section-head { align-items: flex-start; }
   #results li { align-items: flex-start; }
   .result-actions { width: 100%; }

@@ -1,5 +1,5 @@
-const CACHE = 'mundo-afora-v11';
-const SHELL = ['./', 'index.html', 'config.js', 'manifest.json', 'icon.svg',
+const CACHE = 'mundo-afora-v12';
+const SHELL = ['./', 'index.html', 'config.js', 'manifest.json', 'icon.png',
   'css/base.css', 'css/home.css', 'css/itinerary.css', 'css/map.css', 'css/dialogs.css', 'css/responsive.css',
   'js/state.js', 'js/services.js', 'js/routing.js', 'js/views.js', 'js/map.js', 'js/dialogs.js', 'js/cloud.js', 'js/events.js', 'css/cloud.css'];
 
@@ -36,6 +36,7 @@ self.addEventListener('fetch', (e) => {
     url.hostname === 'flagcdn.com' ||
     url.hostname === 'unpkg.com' ||
     url.hostname === 'cdn.jsdelivr.net' ||
+    url.hostname === 'fonts.googleapis.com' ||
     url.hostname === 'fonts.gstatic.com';
 
   if (cacheFirst) {

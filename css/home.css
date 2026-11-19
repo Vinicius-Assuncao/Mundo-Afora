@@ -56,6 +56,7 @@
   transform: translateY(30px);
 }
 .trip-icon img.flag { width: 2.1rem; }
+.trip-icon img.trip-default-icon { width: 1.9rem; height: 1.9rem; object-fit: contain; }
 .trip-body { padding: 36px 18px 18px; }
 .trip-body h3 { font-size: 1.2rem; margin-bottom: 4px; }
 .trip-body .dates { color: var(--muted); font-size: .88rem; }
@@ -207,7 +208,7 @@
   transform: rotate(-5deg);
   backdrop-filter: blur(8px);
 }
-.globe-card .globe { font-size: 6rem; line-height: 1; filter: drop-shadow(0 10px 12px rgba(8, 29, 43, .23)); }
+.globe-card .globe { width: 9rem; height: 9rem; object-fit: contain; filter: drop-shadow(0 10px 12px rgba(8, 29, 43, .23)); }
 .globe-caption { color: rgba(255,255,255,.88); font-size: .74rem; font-weight: 700; letter-spacing: .04em; }
 .orbit {
   position: absolute;

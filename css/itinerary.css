@@ -134,8 +134,8 @@ details.info small { color: var(--muted); display: block; margin-top: 6px; }
 .ideas { padding: 14px 16px; }
 .ideas summary { cursor: pointer; font-weight: 700; color: var(--azul-e); list-style: none; display: flex; align-items: center; gap: 6px; }
 .ideas summary::-webkit-details-marker { display: none; }
-.ideas summary::after { content: "▾"; margin-left: auto; color: var(--muted); }
-.ideas[open] summary::after { content: "▴"; }
+.ideas .idea-chevron { margin-left: auto; color: var(--muted); transition: transform .15s ease; }
+.ideas[open] .idea-chevron { transform: rotate(180deg); }
 #ideaCount { color: var(--muted); font-weight: 500; }
 #ideas { list-style: none; padding: 0; margin: 12px 0 0; display: grid; gap: 8px; }
 #ideas select { width: auto; max-width: 45%; padding: 7px 10px; font-size: .84rem; }
@@ -147,6 +147,7 @@ details.info small { color: var(--muted); display: block; margin-top: 6px; }
   background: linear-gradient(160deg, #ffffff, #f4f7f3); border: 1px solid var(--line);
 }
 .stat b { display: block; font-size: 1.25rem; color: var(--azul-e); letter-spacing: -.02em; }
+.stat b .material-symbols-outlined { font-size: 1em; vertical-align: -2px; }
 .stat span { font-size: .72rem; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
 .overview-grid { display: grid; gap: 12px; margin-top: 14px; }
 .overview-day {
@@ -251,22 +252,6 @@ details.info small { color: var(--muted); display: block; margin-top: 6px; }
 .tab.on { border-width: 2px; }
 .tab.add { min-width: 126px; border-style: dashed; }
 .tab.add b { color: #326b96; }
-.route-tools {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 10px;
-  padding: 12px 13px;
-  border: 1px solid #e4eaf0;
-  border-radius: 14px;
-  background: #f8fafb;
-}
-.route-tools-copy { display: grid; gap: 3px; }
-.route-tools-copy b { color: #294a61; font-size: .82rem; }
-.route-tools-copy span { color: #7a8895; font-size: .72rem; line-height: 1.4; }
-.route-buttons { gap: 6px; }
-.route-buttons .btn { border-color: #dce5ec; color: #2e5d7e; background: #fff; }
 .summary .chip { background: #edf4f3; color: #285b54; }
 .stop { border-color: #e3e9ee; border-radius: 15px; box-shadow: 0 1px 4px rgba(20,48,72,.035); }
 .stop:hover { box-shadow: 0 7px 18px rgba(20,48,72,.08); }
@@ -305,6 +290,7 @@ details.info small { color: var(--muted); display: block; margin-top: 6px; }
   box-shadow: 0 4px 10px rgba(47,111,150,.22);
   vertical-align: -2px;
 }
+.search-section-head h3 .material-symbols-outlined { font-size: 1.2rem; }
 .search-section-head p { margin-top: 5px; color: #5f7483; font-size: .82rem; line-height: 1.45; }
 .search { gap: 8px; }
 .search input {

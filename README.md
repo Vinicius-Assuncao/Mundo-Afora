@@ -97,7 +97,7 @@ Mundo-Afora/
 │   └── events.js       # Eventos e inicialização
 ├── sw.js               # Cache e funcionamento offline
 ├── manifest.json      # Metadados para instalação no celular
-├── icon.svg            # Ícone do aplicativo
+├── icon.png            # Ícone do aplicativo
 ├── LICENSE             # MIT
 └── README.md
 ```

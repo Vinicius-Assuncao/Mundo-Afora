@@ -7,10 +7,11 @@
   <meta name="description" content="Planeje viagens dia a dia: paradas, trajetos, horários e mapa, mesmo offline.">
   <meta name="theme-color" content="#173b59">
   <link rel="manifest" href="manifest.json">
-  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="icon" href="icon.png" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <!-- Estilos organizados por responsabilidade -->
   <link rel="stylesheet" href="css/base.css">
@@ -24,17 +25,18 @@
 <body>
   <header class="top">
     <button id="brandBtn" class="brand" aria-label="Início">
-      <span class="logo">🌍</span><span id="brandName">Mundo Afora</span>
+      <img class="logo" src="icon.png" alt=""><span id="brandName">Mundo Afora</span>
     </button>
-    <button id="backBtn" class="btn ghost light trip-back hidden" aria-label="Voltar para viagens">←</button>
+    <button id="backBtn" class="btn ghost light trip-back hidden" aria-label="Voltar para viagens"><span class="material-symbols-outlined" aria-hidden="true">keyboard_arrow_left</span></button>
     <div id="topTitle" class="top-title"></div>
     <div class="trip-actions">
-      <button id="editTripBtn" class="btn ghost light hidden">Editar</button>
-      <button id="exportBtn" class="btn ghost light hidden">Exportar</button>
+      <button id="editTripBtn" class="btn ghost light hidden"><span class="material-symbols-outlined" aria-hidden="true">edit</span> Editar</button>
+      <button id="exportBtn" class="btn ghost light hidden"><span class="material-symbols-outlined" aria-hidden="true">download</span> Exportar</button>
     </div>
     <div class="top-actions">
       <span id="syncStatus" class="sync-status hidden" aria-live="polite"></span>
-      <button id="authBtn" class="btn ghost light hidden">Entrar com Google</button>
+      <span id="accountEmail" class="account-email hidden"></span>
+      <button id="authBtn" class="btn ghost light hidden is-signin">Entrar com Google</button>
     </div>
   </header>
 
@@ -48,14 +50,14 @@
           <h1 id="homeTitle">Viajar começa com um <em>bom plano.</em></h1>
           <p class="lead">Reúna lugares, organize cada dia e acompanhe seus trajetos em um só lugar. Seu roteiro fica com você, até offline.</p>
           <div class="hero-actions">
-            <button id="newTripBtn" class="btn primary big">＋ Criar viagem</button>
+            <button id="newTripBtn" class="btn primary big"><span class="material-symbols-outlined" aria-hidden="true">add</span> Criar viagem</button>
             <label class="btn import-action big">Importar roteiro<input type="file" id="importFile" accept="application/json" hidden></label>
           </div>
           <p id="heroStats" class="hero-stats" aria-live="polite"></p>
         </div>
         <div class="hero-visual" aria-hidden="true">
           <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
-          <div class="globe-card"><span class="globe">🌍</span><span class="globe-caption">O mundo é seu destino</span></div>
+          <div class="globe-card"><img class="globe" src="icon.png" alt=""></div>
           <span class="float-tag tag-plane">✈️ <b>Novos caminhos</b></span>
           <span class="float-tag tag-pin">📍 <b>Suas próximas paradas</b></span>
           <span class="spark spark-one">✦</span><span class="spark spark-two">✧</span>
@@ -64,10 +66,6 @@
       <div class="hero-bottom" aria-hidden="true"><span>PLANEJE</span><i></i><span>EXPLORE</span><i></i><span>LEMBRE</span></div>
     </div>
     <div class="container">
-      <div id="cloudBanner" class="cloud-banner hidden">
-        <div><b>Leve suas viagens para qualquer aparelho</b><span>Entre com sua conta Google e acesse seus roteiros em outros dispositivos.</span></div>
-        <button id="bannerLogin" class="btn primary" type="button">Entrar com Google</button>
-      </div>
       <div class="section-head">
         <div>
           <p class="section-kicker">SEU ESPAÇO DE VIAGEM</p>
@@ -89,23 +87,13 @@
         <div id="dayHead"></div>
         <div id="summary" class="summary"></div>
         <div id="overviewDays" class="hidden"></div>
-        <div class="route-tools" id="dayActions">
-          <div class="route-tools-copy">
-            <b>Tempos e trajetos</b>
-            <span id="routeHelp">Atualize as estimativas entre as paradas.</span>
-          </div>
-          <div class="row route-buttons">
-            <button id="recalcDay" class="btn sm" type="button">↻ Atualizar dia</button>
-            <button id="recalcTrip" class="btn sm" type="button">Atualizar viagem</button>
-          </div>
-        </div>
         <ol id="stops"></ol>
       </div>
 
       <section class="search-section" aria-labelledby="searchTitle">
         <div class="search-section-head">
           <div>
-            <h3 id="searchTitle"><span aria-hidden="true">＋</span> Adicionar lugares</h3>
+            <h3 id="searchTitle"><span class="material-symbols-outlined" aria-hidden="true">add</span> Adicionar lugares</h3>
             <p>Busque atrações, cidades ou endereços para montar seu dia.</p>
           </div>
         </div>
@@ -117,7 +105,7 @@
       <ul id="results" aria-live="polite" aria-label="Resultados da busca"></ul>
 
       <details class="card ideas" open>
-        <summary>Lista de ideias <span id="ideaCount"></span></summary>
+        <summary>Lista de ideias <span id="ideaCount"></span><span class="material-symbols-outlined idea-chevron" aria-hidden="true">keyboard_arrow_down</span></summary>
         <ul id="ideas"></ul>
       </details>
     </aside>

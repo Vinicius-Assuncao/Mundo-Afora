@@ -14,19 +14,48 @@ const Cloud = (() => {
   const strip = (t) => { const { updatedAt, ...rest } = t; return rest; };
   const snapOf = (t) => JSON.stringify(strip(t));
 
-  function setStatus(text, kind = '') {
+  function setStatus(state = 'pending') {
     const el = $('#syncStatus');
     if (!el) return;
-    el.textContent = text;
-    el.className = `sync-status ${kind}`;
+    if (!session) {
+      el.replaceChildren();
+      el.className = 'sync-status hidden';
+      el.removeAttribute('aria-label');
+      el.removeAttribute('title');
+      return;
+    }
+    const synced = state === 'synced';
+    const icon = document.createElement('span');
+    icon.className = 'material-symbols-outlined';
+    icon.setAttribute('aria-hidden', 'true');
+    icon.textContent = synced ? 'cloud_done' : 'progress_activity';
+    el.replaceChildren(icon);
+    el.className = `sync-status ${synced ? 'synced' : 'pending'}`;
+    el.setAttribute('aria-label', synced ? 'Sincronizado' : 'Sincronização pendente');
+    el.title = synced ? 'Sincronizado' : 'Sincronização pendente';
   }
   function renderAuth() {
     const on = !!session;
-    $('#authBtn').textContent = on ? 'Sair' : 'Entrar com Google';
-    $('#authBtn').title = on ? `Conectado como ${session.user.email}` : '';
-    $('#cloudBanner').classList.toggle('hidden', on);
-    if (on) setStatus(session.user.email, '');
-    else setStatus('Salvo só neste aparelho', '');
+    const email = $('#accountEmail');
+    const authButton = $('#authBtn');
+    email.textContent = on ? session.user.email : '';
+    email.classList.toggle('hidden', !on);
+    authButton.replaceChildren();
+    if (on) {
+      const icon = document.createElement('span');
+      icon.className = 'material-symbols-outlined';
+      icon.setAttribute('aria-hidden', 'true');
+      icon.textContent = 'logout';
+      authButton.append(icon);
+    } else {
+      authButton.textContent = 'Entrar com Google';
+    }
+    authButton.classList.toggle('is-signout', on);
+    authButton.classList.toggle('is-signin', !on);
+    authButton.title = on ? `Conectado como ${session.user.email}` : '';
+    const banner = $('#cloudBanner');
+    if (banner) banner.classList.toggle('hidden', on);
+    setStatus(on ? 'pending' : '');
   }
 
   // chamado antes de cada gravação local: marca o que mudou e registra exclusões
@@ -48,7 +77,7 @@ const Cloud = (() => {
   function changed() {
     if (!session || syncing) return;
     clearTimeout(timer);
-    setStatus('Salvando…', '');
+    setStatus('pending');
     timer = setTimeout(sync, 900);
   }
 
@@ -60,7 +89,7 @@ const Cloud = (() => {
     queue = queue.then(async () => {
       if (!session) return;
       syncing = true;
-      setStatus('Sincronizando…', '');
+      setStatus('pending');
       let ok = false;
       try {
         const before = JSON.stringify(db.trips);
@@ -68,11 +97,11 @@ const Cloud = (() => {
         await push();
         persist();
         if (JSON.stringify(db.trips) !== before) refreshUI();
-        setStatus('Salvo na nuvem ✓', 'ok');
+        setStatus('synced');
         ok = true;
       } catch (err) {
         console.error(err);
-        setStatus('Sem conexão. Tudo segue salvo neste aparelho.', 'err');
+        setStatus('pending');
       } finally {
         syncing = false;
       }
@@ -167,7 +196,7 @@ const Cloud = (() => {
 
   function init() {
     if (!enabled()) {
-      ['#authBtn', '#cloudBanner', '#syncStatus'].forEach((s) => $(s).classList.add('hidden'));
+      ['#authBtn', '#accountEmail', '#syncStatus'].forEach((s) => $(s).classList.add('hidden'));
       return;
     }
     sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY, {
@@ -179,15 +208,14 @@ const Cloud = (() => {
       if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') onSession(s);
     });
     $('#authBtn').onclick = () => (session ? signOut() : signIn());
-    $('#bannerLogin').onclick = signIn;
+    const bannerLogin = $('#bannerLogin');
+    if (bannerLogin) bannerLogin.onclick = signIn;
     document.addEventListener('visibilitychange', () => { if (!document.hidden && session) sync(); });
     window.addEventListener('online', () => { if (session) sync(); });
-    window.addEventListener('offline', () => setStatus('Sem internet. Salvo neste aparelho.', 'err'));
-    setStatus('Salvo só neste aparelho', '');
+    window.addEventListener('offline', () => { if (session) setStatus('pending'); });
   }
 
   if (enabled()) {
-    $('#syncStatus').classList.remove('hidden');
     $('#authBtn').classList.remove('hidden');
   }
   init();

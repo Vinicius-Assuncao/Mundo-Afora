@@ -60,9 +60,9 @@ function initMap() {
 
       container.innerHTML = `
         <button type="button" class="map-style-toggle" aria-expanded="false" aria-label="Escolher estilo do mapa">
-          <span class="map-style-icon">◫</span>
+          <span class="map-style-icon material-symbols-outlined" aria-hidden="true">map</span>
           <span class="map-style-label">Mapa</span>
-          <span class="map-style-chevron">⌄</span>
+          <span class="map-style-chevron material-symbols-outlined" aria-hidden="true">keyboard_arrow_down</span>
         </button>
         <div class="map-style-menu" role="radiogroup" aria-label="Estilo do mapa">
           ${Object.entries(AVAILABLE_MAP_STYLES).map(([id, style]) => `
