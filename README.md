@@ -20,7 +20,7 @@ Tudo funciona no navegador e pode ser instalado no celular como aplicativo. Os d
 - 🔁 **Recálculo de trajetos** por dia ou da viagem inteira, para economizar requisições
 - ↕️ **Ordenação manual** das paradas por arrastar, e transferência de paradas entre dias
 - 💡 **Lista de ideias** para guardar lugares sem dia definido
-- 🗺️ **Mapa** com as paradas numeradas, pré-visualização com foto ao passar o cursor e alternância entre mapa e satélite
+- 🗺️ **Mapa** com as paradas numeradas, pré-visualização com foto e cinco estilos: Padrão, Limpo, Escuro, Satélite e Satélite com nomes
 - 🎨 **Dez cores por dia** para organizar o roteiro visualmente
 - 💾 **Exportação e importação** de viagens em JSON, para backup ou para outro aparelho
 - 📱 **Layout responsivo** para celular e desktop e funcionamento offline dos mapas já visitados
@@ -32,7 +32,7 @@ Tudo funciona no navegador e pode ser instalado no celular como aplicativo. Os d
 - 🌐 **HTML5** para a estrutura das telas
 - 🎨 **CSS3** com variáveis, layout em grid e flexbox
 - ⚡ **JavaScript (ES6+)** puro, sem frameworks
-- 🗺️ **Leaflet** para o mapa, com tiles do OpenStreetMap e imagens de satélite do Esri
+- 🗺️ **Leaflet** para o mapa, com tiles do OpenStreetMap, CARTO e imagens de satélite do Esri
 - ↕️ **SortableJS** para ordenar paradas por arrastar
 - 🛣️ **OpenRouteService** para cálculo de trajetos
 - 📍 **Nominatim** (OpenStreetMap) para busca de lugares
@@ -52,19 +52,21 @@ Aplicação estática, hospedada no GitHub Pages:
 
 ---
 
+## 🔗 Navegação por URL
+
+A navegação usa hash routes e funciona diretamente no GitHub Pages:
+
+- `#/viagens` abre a lista de viagens
+- `#/Roma-2027` abre diretamente a viagem cujo nome gera esse slug
+
+O histórico do navegador acompanha a navegação entre telas. Links de viagens podem ser copiados e abertos novamente no mesmo navegador, onde os dados locais estão armazenados.
+
 ## 🗄️ Armazenamento dos dados
 
 Os dados são salvos no `localStorage` do navegador. Não existe conta nem servidor próprio: cada aparelho guarda as próprias viagens.
 
 Para transferir ou fazer backup de uma viagem, use **Exportar** na tela da viagem e **Importar viagem** na tela inicial. O arquivo gerado é um JSON legível.
 
----
-
-## ⚙️ Configuração
-
-O cálculo de trajetos usa a API do OpenRouteService. A chave é definida no arquivo `config.js`. Como o código é público, a chave deve ser restrita ao domínio da aplicação no painel do provedor.
-
-Sem chave configurada, o roteiro funciona normalmente, mas os trajetos não são calculados.
 
 ---
 
@@ -72,14 +74,27 @@ Sem chave configurada, o roteiro funciona normalmente, mas os trajetos não são
 
 ```text
 Mundo-Afora/
-├── index.html      # Telas: início, viagem e diálogo de criação e edição
-├── style.css       # Estilos e layout responsivo
-├── app.js          # Lógica: viagens, dias, paradas, trajetos, mapa e importação
-├── config.js       # Nome do app e chave da API de trajetos
-├── sw.js           # Service worker: cache e funcionamento offline
-├── manifest.json   # Metadados para instalação no celular
-├── icon.svg        # Ícone do aplicativo
-├── LICENSE         # MIT
+├── index.html          # Estrutura da aplicação
+├── config.js           # Nome do app e chaves de serviços
+├── css/
+│   ├── base.css        # Tokens, componentes globais e cabeçalho
+│   ├── home.css        # Tela inicial e cartões de viagem
+│   ├── itinerary.css   # Roteiro, paradas, busca e ideias
+│   ├── map.css         # Marcadores, tooltips e seletor de mapas
+│   ├── dialogs.css     # Diálogos e feedback
+│   └── responsive.css  # Regras responsivas
+├── js/
+│   ├── state.js        # Estado e utilitários
+│   ├── services.js     # APIs e dados das atrações
+│   ├── routing.js      # Cálculos de trajetos
+│   ├── views.js        # Rotas e renderização das telas
+│   ├── map.js          # Leaflet e estilos de mapa
+│   ├── dialogs.js      # Diálogos, importação e exportação
+│   └── events.js       # Eventos e inicialização
+├── sw.js               # Cache e funcionamento offline
+├── manifest.json      # Metadados para instalação no celular
+├── icon.svg            # Ícone do aplicativo
+├── LICENSE             # MIT
 └── README.md
 ```
 

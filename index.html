@@ -12,7 +12,13 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="style.css">
+  <!-- Estilos organizados por responsabilidade -->
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/home.css">
+  <link rel="stylesheet" href="css/itinerary.css">
+  <link rel="stylesheet" href="css/map.css">
+  <link rel="stylesheet" href="css/dialogs.css">
+  <link rel="stylesheet" href="css/responsive.css">
 </head>
 <body>
   <header class="top">
@@ -27,6 +33,7 @@
     </div>
   </header>
 
+  <main id="appMain">
   <!-- TELA INICIAL -->
   <section id="home" class="view" aria-labelledby="homeTitle">
     <div class="hero">
@@ -106,6 +113,7 @@
       </details>
     </aside>
   </section>
+  </main>
 
   <!-- DIÁLOGO DE VIAGEM -->
   <dialog id="tripDlg">
@@ -146,7 +154,14 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/sortablejs@1.15.2/Sortable.min.js"></script>
+  <!-- Configuração e módulos do aplicativo (ordem de dependências) -->
   <script src="config.js"></script>
-  <script src="app.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/services.js"></script>
+  <script src="js/routing.js"></script>
+  <script src="js/views.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/dialogs.js"></script>
+  <script src="js/events.js"></script>
 </body>
 </html>

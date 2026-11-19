@@ -1,0 +1,132 @@
+/* marcadores e tooltips do mapa */
+.pin {
+  width: 32px; height: 32px; border-radius: 50%;
+  color: #fff; font-weight: 800; font-size: 13px;
+  display: flex; align-items: center; justify-content: center;
+  border: 3px solid #fff;
+  box-shadow: 0 3px 10px rgba(0,0,0,.35);
+  transition: transform .15s;
+}
+.pin:hover { transform: scale(1.12); }
+.leaflet-tooltip.map-tip {
+  padding: 0; border: none; border-radius: 14px; background: #fff;
+  box-shadow: 0 10px 28px rgba(0,0,0,.25); overflow: hidden; width: 190px; white-space: normal;
+}
+.leaflet-tooltip.map-tip::before { display: none; }
+.map-tip img { width: 100%; height: 100px; object-fit: cover; display: block; }
+.map-tip .tip-body { padding: 8px 10px 10px; }
+.map-tip b { display: block; color: var(--azul-e); font-size: .88rem; line-height: 1.25; }
+.map-tip span { font-size: .75rem; color: var(--muted); font-weight: 600; }
+.leaflet-control.map-style-control,
+.leaflet-control-layers { border: none; border-radius: 14px; box-shadow: 0 8px 24px rgba(31,58,95,.18); }
+.map-style-control {
+  min-width: 154px;
+  background: rgba(255,255,255,.96);
+  backdrop-filter: blur(10px);
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.75);
+  border-radius: 14px;
+  font-family: "Inter", system-ui, sans-serif;
+}
+.map-style-toggle,
+.map-style-option {
+  width: 100%;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--azul-e);
+}
+.map-style-toggle {
+  height: 42px;
+  display: grid;
+  grid-template-columns: 28px 1fr 18px;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  font-size: .78rem;
+  text-align: left;
+}
+.map-style-toggle:hover,
+.map-style-option:hover {
+  transform: none;
+  box-shadow: none;
+  background: #f2f6fa;
+}
+.map-style-icon {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: var(--azul);
+  color: #fff;
+  font-size: 1rem;
+}
+.map-style-label { overflow: hidden; text-overflow: ellipsis; }
+.map-style-chevron { color: var(--muted); font-size: 1rem; transition: transform .15s ease; }
+.map-style-control.open .map-style-chevron { transform: rotate(180deg); }
+.map-style-menu {
+  display: none;
+  padding: 5px;
+  border-top: 1px solid var(--line);
+  background: #fff;
+  gap: 3px;
+}
+.map-style-control.open .map-style-menu { display: grid; }
+.map-style-option {
+  display: grid;
+  grid-template-columns: 42px 1fr;
+  align-items: center;
+  gap: 9px;
+  min-height: 48px;
+  padding: 5px 7px;
+  border-radius: 9px;
+  text-align: left;
+  font-size: .78rem;
+  line-height: 1.2;
+}
+.map-style-option.active {
+  background: #e9f0f7;
+  color: var(--azul-e);
+  box-shadow: inset 0 0 0 1px rgba(47,93,138,.18);
+}
+.map-preview {
+  position: relative;
+  width: 42px;
+  height: 34px;
+  overflow: hidden;
+  border-radius: 7px;
+  border: 1px solid rgba(31,58,95,.12);
+  background:
+    linear-gradient(145deg, transparent 42%, #999ac4 43%, #999ac4 48%, transparent 49%),
+    linear-gradient(35deg, #dcebd7 20%, #f1ead8 21%, #f1ead8 52%, #c8ddeb 53%);
+}
+.map-preview.light {
+  background:
+    linear-gradient(135deg, transparent 42%, #ebd5d7 43%, #ebd5d7 49%, transparent 50%),
+    linear-gradient(35deg, #e8eee7 18%, #f8f7f2 19%, #f8f7f2 54%, #dce8ef 55%);
+}
+.map-preview.dark {
+  background:
+    linear-gradient(135deg, transparent 42%, #666666 43%, #666666 49%, transparent 50%),
+    linear-gradient(35deg, #263746 18%, #344654 19%, #344654 54%, #1c2934 55%);
+}
+.map-preview.sat {
+  background:
+    linear-gradient(135deg, transparent 38%, rgba(214,191,132,.38) 39%, transparent 62%),
+    linear-gradient(145deg, #5d7957, #9d9270 48%, #314f3a);
+}
+.map-preview.satlab {
+  background:
+    linear-gradient(135deg, transparent 42%, #ffffff 43%, #ffffff 49%, transparent 50%),
+    linear-gradient(135deg, transparent 38%, rgba(214,191,132,.38) 39%, transparent 62%),
+    linear-gradient(145deg, #5d7957, #9d9270 48%, #314f3a);
+}
+
+/* Ícone visual dos marcadores e tooltips */
+.tip-icon {
+  height: 70px; display: flex; align-items: center; justify-content: center; font-size: 2.3rem;
+  background: linear-gradient(135deg, #efe9da, #dde8ee);
+}

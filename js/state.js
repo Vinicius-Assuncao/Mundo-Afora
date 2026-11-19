@@ -1,0 +1,73 @@
+const KEY = 'mundo-afora.v1';
+const $ = (s) => document.querySelector(s);
+
+const EMOJIS = ['🌍','✈️','🏖️','🏔️','🏙️','🗺️','🚗','🚆','⛵','🏕️','🍷','🎒','📸','🌅','🌴','🏛️','🎡','🌋','🐋','🛶','🍜','🌸','❄️','🌵','🎉','💼','⚽','🎨'];
+const FLAGS = [
+  ['br','Brasil'],['pt','Portugal'],['es','Espanha'],['fr','França'],['it','Itália'],['de','Alemanha'],
+  ['gb','Reino Unido'],['ie','Irlanda'],['nl','Países Baixos'],['ch','Suíça'],['at','Áustria'],['gr','Grécia'],
+  ['no','Noruega'],['se','Suécia'],['is','Islândia'],['tr','Turquia'],['ru','Rússia'],['us','Estados Unidos'],
+  ['ca','Canadá'],['mx','México'],['ar','Argentina'],['cl','Chile'],['uy','Uruguai'],['pe','Peru'],['co','Colômbia'],
+  ['jp','Japão'],['kr','Coreia do Sul'],['cn','China'],['in','Índia'],['th','Tailândia'],['ae','Emirados Árabes'],
+  ['ma','Marrocos'],['eg','Egito'],['za','África do Sul'],['au','Austrália'],['nz','Nova Zelândia'],
+];
+const COLORS = ['#2f5d8a','#4a6fa5','#1f5f6b','#3d7a4f','#6b8e4e','#8b5e3c','#a0522d','#9a6b1f','#5c4033','#1a1a1a'];
+const MODES = {
+  walk: { profile: 'foot-walking', label: 'A pé' },
+  bike: { profile: 'cycling-regular', label: 'Bicicleta' },
+  car:  { profile: 'driving-car', label: 'Carro' },
+};
+
+const ICON_EMOJIS = ['📍','🏛️','⛪','🕌','🏰','🗿','⛲','🌉','🚉','🎭','🖼️','🍕','🍝','☕','🍦','🛍️','🌳','🌊','🏟️','🌃','🏞️','🎡','🍷','🎶','🛕','🌅','🏖️','🚠','🕰️'];
+let iconEdit = null;
+let db = JSON.parse(localStorage.getItem(KEY) || 'null') || { trips: [], currentId: null };
+let dayIdx = 0, overview = true, lastResults = [], editingId = null;
+let picked = '🌍', pickerTab = 'emoji';
+let map, layer;
+const wikiBusy = new Set();
+
+// ---------- utilidades ----------
+const save = () => localStorage.setItem(KEY, JSON.stringify(db));
+const uid = () => Math.random().toString(36).slice(2, 10);
+const cur = () => db.trips.find((t) => t.id === db.currentId);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) =>
+  ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const toMin = (hhmm) => { const [h, m] = hhmm.split(':').map(Number); return h * 60 + m; };
+const fmt = (min) => `${Math.floor(min / 60)}h${String(Math.round(min % 60)).padStart(2, '0')}`;
+const hasKey = () => CONFIG.ORS_KEY && !CONFIG.ORS_KEY.startsWith('COLE_');
+const flagUrl = (code, w = 80) => `https://flagcdn.com/w${w}/${code}.png`;
+
+// valor do ícone: emoji ("🌍") ou bandeira ("flag:br")
+function visual(v, cls = 'emo') {
+  if (v && v.startsWith('flag:')) return `<img class="flag ${cls}" src="${flagUrl(v.slice(5))}" alt="" loading="lazy">`;
+  return `<span class="${cls}">${esc(v || '🌍')}</span>`;
+}
+function toast(msg, kind = '') {
+  const t = $('#toast');
+  t.className = kind;
+  t.textContent = msg;
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => t.classList.add('hidden'), 3200);
+}
+function fmtDate(iso) {
+  return new Date(iso + 'T12:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+}
+function dateRange(t) {
+  return t.start ? `${fmtDate(t.start)} – ${fmtDate(t.end || t.start)}` : 'Sem datas definidas';
+}
+function isoRange(start, end) {
+  if (!start) return [];
+  const out = [], d = new Date(start + 'T12:00'), e = new Date((end || start) + 'T12:00');
+  while (d <= e && out.length < 60) { out.push(d.toISOString().slice(0, 10)); d.setDate(d.getDate() + 1); }
+  return out;
+}
+function newDay(i, date = null) {
+  return { id: uid(), name: `Dia ${i + 1}`, date, color: COLORS[i % COLORS.length], stops: [] };
+}
+function newStop(place) {
+  return { id: uid(), name: place.name, lat: place.lat, lon: place.lon, time: '', stay: 60,
+    transport: 'walk', desc: '', photo: '', originalPhoto: '', url: '', icon: '', wikiDone: false };
+}
+function sortedTrips() {
+  return [...db.trips].sort((a, b) => (a.start || '9999').localeCompare(b.start || '9999'));
+}
+

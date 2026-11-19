@@ -1,5 +1,7 @@
-const CACHE = 'mundo-afora-v9';
-const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'config.js', 'manifest.json', 'icon.svg'];
+const CACHE = 'mundo-afora-v10';
+const SHELL = ['./', 'index.html', 'config.js', 'manifest.json', 'icon.svg',
+  'css/base.css', 'css/home.css', 'css/itinerary.css', 'css/map.css', 'css/dialogs.css', 'css/responsive.css',
+  'js/state.js', 'js/services.js', 'js/routing.js', 'js/views.js', 'js/map.js', 'js/dialogs.js', 'js/events.js'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)));
