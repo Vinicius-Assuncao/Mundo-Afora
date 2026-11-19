@@ -6,6 +6,7 @@ const Cloud = (() => {
   const META_KEY = 'mundo-afora.cloud';
   let meta = JSON.parse(localStorage.getItem(META_KEY) || 'null') || { owner: null, snap: {}, deleted: [] };
   let sb = null, session = null, timer = null, queue = Promise.resolve();
+  let syncing = false; // evita que a própria sincronização dispare outra
 
   const enabled = () => !!window.supabase && !!CONFIG.SUPABASE_URL && !CONFIG.SUPABASE_URL.includes('SEU-PROJETO')
     && !!CONFIG.SUPABASE_ANON_KEY && !CONFIG.SUPABASE_ANON_KEY.startsWith('COLE_');
@@ -45,26 +46,38 @@ const Cloud = (() => {
   }
   // agenda o envio logo após a última alteração (evita uma requisição por tecla)
   function changed() {
-    if (!session) return;
+    if (!session || syncing) return;
     clearTimeout(timer);
     setStatus('Salvando…', '');
     timer = setTimeout(sync, 900);
   }
 
+  function hasPending() {
+    return meta.deleted.length > 0 || db.trips.some((t) => meta.snap[t.id] !== snapOf(t));
+  }
+
   function sync() {
     queue = queue.then(async () => {
       if (!session) return;
+      syncing = true;
       setStatus('Sincronizando…', '');
+      let ok = false;
       try {
+        const before = JSON.stringify(db.trips);
         await pull();
         await push();
         persist();
+        if (JSON.stringify(db.trips) !== before) refreshUI();
         setStatus('Salvo na nuvem ✓', 'ok');
-        refreshUI();
+        ok = true;
       } catch (err) {
         console.error(err);
         setStatus('Sem conexão. Tudo segue salvo neste aparelho.', 'err');
+      } finally {
+        syncing = false;
       }
+      // só reenvia se ainda houver alteração real do usuário (sem retentativas em loop)
+      if (ok && session && hasPending()) changed();
     });
     return queue;
   }
