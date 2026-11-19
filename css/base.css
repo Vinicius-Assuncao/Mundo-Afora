@@ -103,6 +103,13 @@ input:focus, select:focus { border-color: var(--azul); box-shadow: 0 0 0 3px rgb
 }
 .top-actions { display: flex; gap: 6px; }
 .top-actions .btn { padding: 8px 12px; font-size: .88rem; }
+.trip-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+.trip-actions .btn { padding: 8px 12px; font-size: .88rem; border-radius: 10px; }
 .trip-back {
   width: 38px;
   height: 38px;
@@ -151,4 +158,5 @@ button:disabled, .btn:disabled {
 .top-actions .btn { border-radius: 10px; }
 body.in-trip #brandName { display: none; }
 body.in-trip .brand { display: none; }
-body.in-trip .top-title { justify-content: flex-start; text-align: left; }
+body.in-trip .top-title { flex: 0 1 auto; justify-content: flex-start; text-align: left; }
+body.in-trip .top-actions { margin-left: auto; }

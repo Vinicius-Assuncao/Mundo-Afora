@@ -4,7 +4,7 @@
 
 O **Mundo Afora** é uma aplicação web para montar roteiros de viagem. Você organiza a viagem em dias, adiciona os lugares que quer visitar, define horários e tempo de permanência e escolhe como se deslocar entre cada parada. O trajeto aparece no mapa, e a visão geral mostra o panorama de toda a viagem.
 
-Tudo funciona no navegador e pode ser instalado no celular como aplicativo. Os dados ficam salvos no próprio aparelho, sem necessidade de conta.
+Tudo funciona no navegador e pode ser instalado no celular como aplicativo. Use sem conta, com os dados no próprio aparelho, ou entre com o Google para sincronizar suas viagens na nuvem.
 
 ---
 
@@ -36,6 +36,7 @@ Tudo funciona no navegador e pode ser instalado no celular como aplicativo. Os d
 - ↕️ **SortableJS** para ordenar paradas por arrastar
 - 🛣️ **OpenRouteService** para cálculo de trajetos
 - 📍 **Nominatim** (OpenStreetMap) para busca de lugares
+- ☁️ **Supabase** (banco PostgreSQL com autenticação e RLS) e login Google para sincronizar viagens
 - 📖 **Wikipédia** para descrições e fotos dos lugares
 - 🏳️ **FlagCDN** para as bandeiras
 - 🔧 **Service Worker** para funcionamento offline
@@ -63,10 +64,13 @@ O histórico do navegador acompanha a navegação entre telas. Links de viagens 
 
 ## 🗄️ Armazenamento dos dados
 
-Os dados são salvos no `localStorage` do navegador. Não existe conta nem servidor próprio: cada aparelho guarda as próprias viagens.
+Por padrão, as viagens ficam salvas no navegador do aparelho e o app funciona sem conta.
 
-Para transferir ou fazer backup de uma viagem, use **Exportar** na tela da viagem e **Importar viagem** na tela inicial. O arquivo gerado é um JSON legível.
+Com o login Google, as viagens também são guardadas no **Supabase**, vinculadas à sua conta, e aparecem em qualquer dispositivo onde você entrar. O aparelho mantém uma cópia local, então o roteiro continua disponível offline e é sincronizado quando a conexão volta.
 
+Em caso de conflito (a mesma viagem alterada em dois aparelhos), vale a alteração mais recente.
+
+Para backup ou para levar uma viagem a outro aparelho, use **Exportar** e **Importar roteiro**.
 
 ---
 

@@ -1,7 +1,7 @@
-const CACHE = 'mundo-afora-v10';
+const CACHE = 'mundo-afora-v11';
 const SHELL = ['./', 'index.html', 'config.js', 'manifest.json', 'icon.svg',
   'css/base.css', 'css/home.css', 'css/itinerary.css', 'css/map.css', 'css/dialogs.css', 'css/responsive.css',
-  'js/state.js', 'js/services.js', 'js/routing.js', 'js/views.js', 'js/map.js', 'js/dialogs.js', 'js/events.js'];
+  'js/state.js', 'js/services.js', 'js/routing.js', 'js/views.js', 'js/map.js', 'js/dialogs.js', 'js/cloud.js', 'js/events.js', 'css/cloud.css'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)));
@@ -35,6 +35,7 @@ self.addEventListener('fetch', (e) => {
     url.hostname === 'upload.wikimedia.org' ||
     url.hostname === 'flagcdn.com' ||
     url.hostname === 'unpkg.com' ||
+    url.hostname === 'cdn.jsdelivr.net' ||
     url.hostname === 'fonts.gstatic.com';
 
   if (cacheFirst) {

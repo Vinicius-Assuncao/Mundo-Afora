@@ -1,0 +1,182 @@
+// ---------- nuvem: Supabase + login com Google ----------
+// Estratégia: o localStorage continua sendo a cópia usada pelo app (funciona offline).
+// Quando há login, cada viagem é enviada ao Supabase quando muda e as viagens da nuvem
+// são baixadas. Em conflito, vale a alteração mais recente (última gravação vence).
+const Cloud = (() => {
+  const META_KEY = 'mundo-afora.cloud';
+  let meta = JSON.parse(localStorage.getItem(META_KEY) || 'null') || { owner: null, snap: {}, deleted: [] };
+  let sb = null, session = null, timer = null, queue = Promise.resolve();
+
+  const enabled = () => !!window.supabase && !!CONFIG.SUPABASE_URL && !CONFIG.SUPABASE_URL.includes('SEU-PROJETO')
+    && !!CONFIG.SUPABASE_ANON_KEY && !CONFIG.SUPABASE_ANON_KEY.startsWith('COLE_');
+  const persist = () => localStorage.setItem(META_KEY, JSON.stringify(meta));
+  const strip = (t) => { const { updatedAt, ...rest } = t; return rest; };
+  const snapOf = (t) => JSON.stringify(strip(t));
+
+  function setStatus(text, kind = '') {
+    const el = $('#syncStatus');
+    if (!el) return;
+    el.textContent = text;
+    el.className = `sync-status ${kind}`;
+  }
+  function renderAuth() {
+    const on = !!session;
+    $('#authBtn').textContent = on ? 'Sair' : 'Entrar com Google';
+    $('#authBtn').title = on ? `Conectado como ${session.user.email}` : '';
+    $('#cloudBanner').classList.toggle('hidden', on);
+    if (on) setStatus(session.user.email, '');
+    else setStatus('Salvo só neste aparelho', '');
+  }
+
+  // chamado antes de cada gravação local: marca o que mudou e registra exclusões
+  function touch() {
+    const now = Date.now();
+    db.trips.forEach((t) => { if (meta.snap[t.id] !== snapOf(t)) t.updatedAt = now; });
+    if (session) {
+      const ids = new Set(db.trips.map((t) => t.id));
+      Object.keys(meta.snap).forEach((id) => {
+        if (!ids.has(id)) {
+          delete meta.snap[id];
+          if (!meta.deleted.includes(id)) meta.deleted.push(id);
+        }
+      });
+      persist();
+    }
+  }
+  // agenda o envio logo após a última alteração (evita uma requisição por tecla)
+  function changed() {
+    if (!session) return;
+    clearTimeout(timer);
+    setStatus('Salvando…', '');
+    timer = setTimeout(sync, 900);
+  }
+
+  function sync() {
+    queue = queue.then(async () => {
+      if (!session) return;
+      setStatus('Sincronizando…', '');
+      try {
+        await pull();
+        await push();
+        persist();
+        setStatus('Salvo na nuvem ✓', 'ok');
+        refreshUI();
+      } catch (err) {
+        console.error(err);
+        setStatus('Sem conexão. Tudo segue salvo neste aparelho.', 'err');
+      }
+    });
+    return queue;
+  }
+
+  async function pull() {
+    const { data, error } = await sb.from('trips').select('id, data, updated_at');
+    if (error) throw error;
+    const remote = new Map(data.map((r) => [r.id, r]));
+
+    // viagens apagadas em outro aparelho somem daqui, desde que não tenham alterações pendentes
+    db.trips = db.trips.filter((t) => {
+      const gone = meta.snap[t.id] !== undefined && !remote.has(t.id) && meta.snap[t.id] === snapOf(t);
+      if (gone) delete meta.snap[t.id];
+      return !gone;
+    });
+
+    for (const r of remote.values()) {
+      if (meta.deleted.includes(r.id)) continue;
+      const rTime = Date.parse(r.updated_at);
+      const local = db.trips.find((t) => t.id === r.id);
+      if (!local) {
+        const t = { ...r.data, id: r.id, updatedAt: rTime };
+        db.trips.push(t);
+        meta.snap[t.id] = snapOf(t);
+      } else if (meta.snap[local.id] === snapOf(local) && rTime > (local.updatedAt || 0)) {
+        Object.assign(local, r.data, { id: r.id, updatedAt: rTime });
+        meta.snap[local.id] = snapOf(local);
+      }
+    }
+    if (db.currentId && !db.trips.some((t) => t.id === db.currentId)) db.currentId = null;
+    localStorage.setItem(KEY, JSON.stringify(db));
+  }
+
+  async function push() {
+    for (const id of [...meta.deleted]) {
+      const { error } = await sb.from('trips').delete().eq('id', id);
+      if (error) throw error;
+      meta.deleted = meta.deleted.filter((x) => x !== id);
+    }
+    const dirty = db.trips.filter((t) => meta.snap[t.id] !== snapOf(t));
+    if (dirty.length) {
+      const rows = dirty.map((t) => ({
+        id: t.id,
+        user_id: session.user.id,
+        data: strip(t),
+        updated_at: new Date(t.updatedAt || Date.now()).toISOString(),
+      }));
+      const { error } = await sb.from('trips').upsert(rows, { onConflict: 'user_id,id' });
+      if (error) throw error;
+      dirty.forEach((t) => { meta.snap[t.id] = snapOf(t); });
+    }
+  }
+
+  // atualiza a tela sem mexer no diálogo se ele estiver aberto
+  function refreshUI() {
+    if (!$('#tripDlg').open) syncRouteFromHash();
+  }
+
+  async function onSession(s) {
+    session = s;
+    renderAuth();
+    if (!s) return;
+    // conta diferente da última usada neste aparelho: tudo local é enviado de novo para a conta atual
+    if (meta.owner !== s.user.id) meta = { owner: s.user.id, snap: {}, deleted: [] };
+    persist();
+    await sync();
+  }
+
+  async function signIn() {
+    const { error } = await sb.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: location.origin + location.pathname },
+    });
+    if (error) toast('Não foi possível entrar agora. Tente novamente.');
+  }
+  async function signOut() {
+    if (!confirm('Sair da conta? As viagens deste aparelho serão removidas daqui. Elas continuam na nuvem e voltam ao entrar de novo.')) return;
+    await sb.auth.signOut();
+    db.trips = [];
+    db.currentId = null;
+    meta = { owner: null, snap: {}, deleted: [] };
+    persist();
+    localStorage.setItem(KEY, JSON.stringify(db));
+    toast('Você saiu da conta.', 'ok');
+    goHome();
+  }
+
+  function init() {
+    if (!enabled()) {
+      ['#authBtn', '#cloudBanner', '#syncStatus'].forEach((s) => $(s).classList.add('hidden'));
+      return;
+    }
+    sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY, {
+      auth: { flowType: 'pkce', detectSessionInUrl: true, persistSession: true, autoRefreshToken: true },
+    });
+    sb.auth.onAuthStateChange((event, s) => {
+      if (event === 'TOKEN_REFRESHED') { session = s; return; }
+      if (event === 'SIGNED_OUT') { onSession(null); return; }
+      if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') onSession(s);
+    });
+    $('#authBtn').onclick = () => (session ? signOut() : signIn());
+    $('#bannerLogin').onclick = signIn;
+    document.addEventListener('visibilitychange', () => { if (!document.hidden && session) sync(); });
+    window.addEventListener('online', () => { if (session) sync(); });
+    window.addEventListener('offline', () => setStatus('Sem internet. Salvo neste aparelho.', 'err'));
+    setStatus('Salvo só neste aparelho', '');
+  }
+
+  if (enabled()) {
+    $('#syncStatus').classList.remove('hidden');
+    $('#authBtn').classList.remove('hidden');
+  }
+  init();
+  return { touch, changed };
+})();

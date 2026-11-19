@@ -1,0 +1,22 @@
+/* ---------- nuvem: status de sincronização, login e banner ---------- */
+.sync-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  line-height: 1;
+  font-size: .75rem; font-weight: 600; color: #fff;
+  padding: 5px 10px; border-radius: 999px;
+  background: rgba(255,255,255,.14);
+  max-width: 230px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sync-status.ok { background: rgba(120, 220, 160, .28); }
+.sync-status.err { background: rgba(255, 170, 120, .32); }
+.cloud-banner {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  margin: 0 0 20px; padding: 16px 18px;
+  background: #fff; border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow);
+}
+.cloud-banner b { display: block; color: var(--azul-e); margin-bottom: 2px; }
+.cloud-banner span { color: var(--muted); font-size: .9rem; }
+@media (max-width: 720px) { .sync-status { display: none; } }

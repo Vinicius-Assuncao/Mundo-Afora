@@ -47,6 +47,8 @@
   body.in-trip .top { height: 58px; padding: 0 10px; gap: 5px; }
   body.in-trip .top-title { font-size: .85rem; }
   body.in-trip .trip-back { width: 32px; height: 32px; flex-basis: 32px; font-size: 1.05rem; }
+  body.in-trip .trip-actions { gap: 3px; }
+  body.in-trip .trip-actions .btn { padding: 7px 7px; font-size: .72rem; }
   body.in-trip .top-actions { gap: 3px; }
   body.in-trip .top-actions .btn { padding: 7px 7px; font-size: .72rem; }
   #map { height: 32vh; min-height: 220px; }

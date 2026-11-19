@@ -19,6 +19,7 @@
   <link rel="stylesheet" href="css/map.css">
   <link rel="stylesheet" href="css/dialogs.css">
   <link rel="stylesheet" href="css/responsive.css">
+  <link rel="stylesheet" href="css/cloud.css">
 </head>
 <body>
   <header class="top">
@@ -27,9 +28,13 @@
     </button>
     <button id="backBtn" class="btn ghost light trip-back hidden" aria-label="Voltar para viagens">←</button>
     <div id="topTitle" class="top-title"></div>
-    <div class="top-actions">
+    <div class="trip-actions">
       <button id="editTripBtn" class="btn ghost light hidden">Editar</button>
       <button id="exportBtn" class="btn ghost light hidden">Exportar</button>
+    </div>
+    <div class="top-actions">
+      <span id="syncStatus" class="sync-status hidden" aria-live="polite"></span>
+      <button id="authBtn" class="btn ghost light hidden">Entrar com Google</button>
     </div>
   </header>
 
@@ -59,6 +64,10 @@
       <div class="hero-bottom" aria-hidden="true"><span>PLANEJE</span><i></i><span>EXPLORE</span><i></i><span>LEMBRE</span></div>
     </div>
     <div class="container">
+      <div id="cloudBanner" class="cloud-banner hidden">
+        <div><b>Leve suas viagens para qualquer aparelho</b><span>Entre com sua conta Google e acesse seus roteiros em outros dispositivos.</span></div>
+        <button id="bannerLogin" class="btn primary" type="button">Entrar com Google</button>
+      </div>
       <div class="section-head">
         <div>
           <p class="section-kicker">SEU ESPAÇO DE VIAGEM</p>
@@ -155,6 +164,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/sortablejs@1.15.2/Sortable.min.js"></script>
   <!-- Configuração e módulos do aplicativo (ordem de dependências) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <script src="config.js"></script>
   <script src="js/state.js"></script>
   <script src="js/services.js"></script>
@@ -162,6 +172,7 @@
   <script src="js/views.js"></script>
   <script src="js/map.js"></script>
   <script src="js/dialogs.js"></script>
+  <script src="js/cloud.js"></script>
   <script src="js/events.js"></script>
 </body>
 </html>

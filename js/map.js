@@ -11,6 +11,20 @@ const MAP_STYLES = {
 };
 let activeMapStyle = 'osm';
 
+function isLocalHosting() {
+  const hostname = location.hostname.toLowerCase();
+  const privateIpv4 = /^10\./.test(hostname)
+    || /^192\.168\./.test(hostname)
+    || /^172\.(1[6-9]|2\d|3[01])\./.test(hostname);
+  return location.protocol === 'file:'
+    || ['localhost', '127.0.0.1', '0.0.0.0', '::1', '[::1]'].includes(hostname)
+    || privateIpv4;
+}
+
+const AVAILABLE_MAP_STYLES = Object.fromEntries(
+  Object.entries(MAP_STYLES).filter(([id]) => !isLocalHosting() || !['light', 'dark'].includes(id))
+);
+
 function tile(url, attribution, subdomains = 'abc') {
   return L.tileLayer(url, { maxZoom: 20, subdomains, attribution });
 }
@@ -29,10 +43,10 @@ function satImagery() {
 function initMap() {
   map = L.map('map', { zoomControl: true }).setView([-14.2, -51.9], 4);
   const saved = localStorage.getItem('mundo-afora.map');
-  const current = MAP_STYLES[saved] ? saved : 'osm';
+  const current = AVAILABLE_MAP_STYLES[saved] ? saved : 'osm';
   activeMapStyle = current;
   const byId = {};
-  for (const [id, o] of Object.entries(MAP_STYLES)) {
+  for (const [id, o] of Object.entries(AVAILABLE_MAP_STYLES)) {
     byId[id] = o.make();
   }
   byId[current].addTo(map);
@@ -51,7 +65,7 @@ function initMap() {
           <span class="map-style-chevron">⌄</span>
         </button>
         <div class="map-style-menu" role="radiogroup" aria-label="Estilo do mapa">
-          ${Object.entries(MAP_STYLES).map(([id, style]) => `
+          ${Object.entries(AVAILABLE_MAP_STYLES).map(([id, style]) => `
             <button type="button" class="map-style-option" data-style="${id}" role="radio" aria-checked="false">
               <span class="map-preview ${id}"><span></span></span>
               <span>${esc(style.label)}</span>
@@ -70,7 +84,7 @@ function initMap() {
           button.classList.toggle('active', active);
           button.setAttribute('aria-checked', String(active));
         });
-        label.textContent = MAP_STYLES[id].label;
+        label.textContent = AVAILABLE_MAP_STYLES[id].label;
       };
 
       toggle.addEventListener('click', () => {

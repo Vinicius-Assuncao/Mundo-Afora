@@ -26,7 +26,11 @@ let map, layer;
 const wikiBusy = new Set();
 
 // ---------- utilidades ----------
-const save = () => localStorage.setItem(KEY, JSON.stringify(db));
+const save = () => {
+  if (typeof Cloud !== 'undefined') Cloud.touch();
+  localStorage.setItem(KEY, JSON.stringify(db));
+  if (typeof Cloud !== 'undefined') Cloud.changed();
+};
 const uid = () => Math.random().toString(36).slice(2, 10);
 const cur = () => db.trips.find((t) => t.id === db.currentId);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) =>
