@@ -77,12 +77,17 @@
   overflow: hidden;
   background: #e9eef1;
 }
+.layout-list .stop-photo-wrap {
+  height: auto;
+  align-self: stretch;
+  overflow: hidden;
+}
 .layout-list .stop-photo-wrap .stop-photo,
 .layout-list .stop-photo-emoji-wrap > .stop-photo {
   width: 100%;
-  height: 100%;
+  height: 190px;
   min-height: 190px;
-  max-height: 260px;
+  max-height: none;
   object-fit: cover;
 }
 .layout-list .stop-photo-emoji-wrap > .stop-photo.ph { min-height: 190px; }

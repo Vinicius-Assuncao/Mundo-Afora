@@ -37,7 +37,7 @@ Tudo funciona no navegador e pode ser instalado no celular como aplicativo. Use 
 - 🛣️ **OpenRouteService** para cálculo de trajetos
 - 📍 **Nominatim** (OpenStreetMap) para busca de lugares
 - ☁️ **Supabase** (banco PostgreSQL com autenticação e RLS) e login Google para sincronizar viagens
-- 📖 **Wikipédia** para descrições e fotos dos lugares
+- 📖 **Wikipédia, Wikimedia Commons e Wikidata** para descrições e fotos dos lugares
 - 🏳️ **FlagCDN** para as bandeiras
 - 🔧 **Service Worker** para funcionamento offline
 

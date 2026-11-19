@@ -229,8 +229,10 @@ $('#results').onclick = async (e) => {
   fixLegs(d);
   save(); renderTrip();
   toast(`“${place.name}” adicionado a ${d.name}.`, 'ok');
-  await enrich(stop);
-  save(); renderTrip();
+  enrich(stop).then(() => {
+    save();
+    if (cur()?.id === t.id) renderTrip();
+  });
   if (d.stops.length > 1 && hasKey()) withBusy(() => legFor(d, d.stops.length - 1));
 };
 
