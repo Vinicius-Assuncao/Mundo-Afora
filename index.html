@@ -21,9 +21,10 @@
   <link rel="stylesheet" href="css/responsive.css">
   <link rel="stylesheet" href="css/cloud.css">
   <link rel="stylesheet" href="css/layout-refinements.css">
+  <link rel="stylesheet" href="css/export.css">
 </head>
 <body>
-  <header class="top">
+  <header id="top" class="top">
     <button id="brandBtn" class="brand" aria-label="Início">
       <img class="logo" src="icon.png" alt=""><span id="brandName">Mundo Afora</span>
     </button>
@@ -130,6 +131,9 @@
       <input id="flagFilter" class="hidden" placeholder="Buscar país…" aria-label="Buscar país">
       <div id="emojiGrid" class="picker-grid"></div>
     </div>
+    <label class="field"><span class="label">Cor da viagem</span>
+      <input id="tColor" type="color" value="#2f5d8a" aria-label="Cor da viagem">
+    </label>
     <label class="field"><span class="label">Nome</span>
       <input id="tName" maxlength="40" placeholder="Ex.: Portugal 2027">
     </label>
@@ -146,6 +150,34 @@
       <button id="tSave" class="btn primary">Salvar</button>
     </div>
   </dialog>
+  <dialog id="exportDlg" class="export-dlg" aria-labelledby="exTitle">
+    <header class="ex-head">
+      <div><h2 id="exTitle">Exportar roteiro</h2><p id="exSub" class="muted"></p></div>
+      <button type="button" id="exClose" class="btn ghost icon" aria-label="Fechar"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>
+    </header>
+    <div class="ex-tabs" role="tablist" aria-label="Seção do diálogo">
+      <button type="button" role="tab" data-extab="opts" class="on" aria-selected="true">Opções</button>
+      <button type="button" role="tab" data-extab="preview" aria-selected="false">Prévia</button>
+    </div>
+    <div class="ex-body" id="exBody" data-tab="opts">
+      <section class="ex-opts" id="exOpts" aria-label="Opções de exportação"></section>
+      <section class="ex-preview" id="exPreviewCol" aria-label="Pré-visualização">
+        <div class="ex-pv-bar" id="exTargetRow"><label for="exTarget" class="label">Visualizando</label><select id="exTarget"></select></div>
+        <div class="ex-pv-stage" id="exPreviewHost"></div>
+        <div class="ex-json-card"><span class="material-symbols-outlined" aria-hidden="true">data_object</span><b>Arquivo JSON</b>
+          <p>Guarda todos os dados da viagem em um arquivo de texto. Para restaurar, use “Importar roteiro” na tela inicial.</p></div>
+      </section>
+    </div>
+    <footer class="ex-foot">
+      <div id="exSummary" class="ex-summary" role="status"></div>
+      <div id="exProgress" class="ex-progress hidden" role="status"><div class="ex-bar"><i id="exProgressBar"></i></div><span id="exProgressText"></span></div>
+      <p id="exError" class="ex-error hidden" role="alert"></p>
+      <div class="ex-actions">
+        <button id="exCancel" class="btn" type="button">Cancelar</button>
+        <button id="exGo" class="btn primary" type="button"><span class="material-symbols-outlined" aria-hidden="true">download</span> Exportar</button>
+      </div>
+    </footer>
+  </dialog>
   <div id="toast" class="hidden" role="status"></div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -159,6 +191,12 @@
   <script src="js/map.js"></script>
   <script src="js/dialogs.js"></script>
   <script src="js/cloud.js"></script>
+  <script src="js/export-model.js"></script>
+  <script src="js/export-assets.js"></script>
+  <script src="js/export-files.js"></script>
+  <script src="js/export-templates.js"></script>
+  <script src="js/export-engine.js"></script>
+  <script src="js/export-ui.js"></script>
   <script src="js/events.js"></script>
   <script src="js/wikimedia-ui.js"></script>
 </body>

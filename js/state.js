@@ -11,6 +11,23 @@ const FLAGS = [
   ['ma','Marrocos'],['eg','Egito'],['za','África do Sul'],['au','Austrália'],['nz','Nova Zelândia'],
 ];
 const COLORS = ['#2f5d8a','#4a6fa5','#1f5f6b','#3d7a4f','#6b8e4e','#8b5e3c','#a0522d','#9a6b1f','#5c4033','#1a1a1a'];
+const isHexColor = (value) => /^#[0-9a-f]{6}$/i.test(String(value || ''));
+function tripColor(trip) {
+  const color = isHexColor(trip?.color) ? trip.color : trip?.days?.[0]?.color;
+  return isHexColor(color) ? color : COLORS[0];
+}
+function shadeColor(hex, amount = 0.18) {
+  const value = tripColor({ color: hex }).slice(1);
+  const rgb = [0, 2, 4].map((i) => Math.round(parseInt(value.slice(i, i + 2), 16) * (1 - amount)));
+  return `#${rgb.map((v) => v.toString(16).padStart(2, '0')).join('')}`;
+}
+function tripColorInk(hex) {
+  const value = tripColor({ color: hex }).slice(1);
+  const rgb = [0, 2, 4].map((i) => parseInt(value.slice(i, i + 2), 16) / 255)
+    .map((v) => v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+  const luminance = 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2];
+  return luminance > 0.18 ? '#1d2935' : '#ffffff';
+}
 const MODES = {
   walk: { profile: 'foot-walking', label: 'A pé' },
   bike: { profile: 'cycling-regular', label: 'Bicicleta' },

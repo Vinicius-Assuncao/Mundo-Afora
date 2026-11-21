@@ -3,7 +3,7 @@ $('#brandBtn').onclick = goHome;
 $('#backBtn').onclick = goHome;
 $('#newTripBtn').onclick = () => openDialog(null);
 $('#editTripBtn').onclick = () => openDialog(cur());
-$('#exportBtn').onclick = exportTrip;
+$('#exportBtn').onclick = () => ExportUI.open();
 
 // Alternância entre mapa, detalhes e visualização dividida.
 const LAYOUT_KEY = 'mundo-afora.layout';

@@ -49,6 +49,7 @@ function openDialog(trip) {
   $('#tName').value = trip?.name || '';
   $('#tStart').value = trip?.start || '';
   $('#tEnd').value = trip?.end || '';
+  $('#tColor').value = tripColor(trip);
   picked = trip?.emoji || '🌍';
   pickerTab = picked.startsWith('flag:') ? 'flag' : 'emoji';
   $('#flagFilter').value = '';
@@ -75,17 +76,18 @@ function saveDialog() {
   }
   if (!start) end = '';
 
+  const color = isHexColor($('#tColor').value) ? $('#tColor').value : tripColor(null);
   const inTrip = !$('#trip').classList.contains('hidden');
   let t = editingId ? db.trips.find((x) => x.id === editingId) : null;
   const isNew = !t;
   if (t) {
-    Object.assign(t, { name, emoji: picked, start, end });
+    Object.assign(t, { name, emoji: picked, color, start, end });
     isoRange(start, end).forEach((iso) => {
       if (!t.days.some((d) => d.date === iso)) t.days.push(newDay(t.days.length, iso));
     });
   } else {
     const days = isoRange(start, end).map((iso, i) => newDay(i, iso));
-    t = { id: uid(), name, emoji: picked, start, end, days: days.length ? days : [newDay(0)], ideas: [] };
+    t = { id: uid(), name, emoji: picked, color, start, end, days: days.length ? days : [newDay(0)], ideas: [] };
     db.trips.push(t);
   }
   save();

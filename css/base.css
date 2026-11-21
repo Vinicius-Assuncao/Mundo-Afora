@@ -172,5 +172,10 @@ button:disabled, .btn:disabled {
 .top-actions .btn { border-radius: 10px; }
 body.in-trip #brandName { display: none; }
 body.in-trip .brand { display: none; }
+body.in-trip .top {
+  background: linear-gradient(105deg, var(--trip-color), var(--trip-color-dark));
+  color: var(--trip-ink);
+}
+body.in-trip .top .btn.light { color: var(--trip-ink); }
 body.in-trip .top-title { flex: 0 1 auto; justify-content: flex-start; text-align: left; }
 body.in-trip .top-actions { margin-left: auto; }

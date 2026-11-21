@@ -1,7 +1,9 @@
-const CACHE = 'mundo-afora-v14';
+const CACHE = 'mundo-afora-v16';
 const SHELL = ['./', 'index.html', 'config.js', 'manifest.json', 'icon.png',
   'css/base.css', 'css/home.css', 'css/itinerary.css', 'css/map.css', 'css/dialogs.css', 'css/responsive.css',
-  'js/state.js', 'js/services.js', 'js/routing.js', 'js/views.js', 'js/map.js', 'js/dialogs.js', 'js/cloud.js', 'js/events.js', 'js/wikimedia-ui.js', 'css/cloud.css'];
+  'js/state.js', 'js/services.js', 'js/routing.js', 'js/views.js', 'js/map.js', 'js/dialogs.js', 'js/cloud.js', 'js/events.js', 'js/wikimedia-ui.js', 'css/cloud.css',
+  'css/export.css', 'css/export-templates.css',
+  'js/export-model.js', 'js/export-assets.js', 'js/export-files.js', 'js/export-templates.js', 'js/export-engine.js', 'js/export-ui.js'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)));
@@ -21,7 +23,7 @@ self.addEventListener('fetch', (e) => {
   const cacheFirst = url.hostname.endsWith('tile.openstreetmap.org')
     || url.hostname.endsWith('arcgisonline.com') || url.hostname.endsWith('cartocdn.com')
     || url.hostname === 'upload.wikimedia.org' || url.hostname === 'flagcdn.com'
-    || url.hostname === 'unpkg.com' || url.hostname === 'cdn.jsdelivr.net'
+    || url.hostname === 'unpkg.com' || url.hostname === 'cdn.jsdelivr.net' || url.hostname === 'cdnjs.cloudflare.com'
     || url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com';
   if (cacheFirst) {
     e.respondWith(caches.match(req).then((hit) => hit || fetch(req).then((res) => {

@@ -1,6 +1,11 @@
 // ---------- telas ----------
 function show(view) {
   document.body.classList.toggle('in-trip', view === 'trip');
+  if (view === 'home') {
+    $('#top').style.removeProperty('--trip-color');
+    $('#top').style.removeProperty('--trip-color-dark');
+    $('#top').style.removeProperty('--trip-ink');
+  }
   $('#home').classList.toggle('hidden', view !== 'home');
   $('#trip').classList.toggle('hidden', view !== 'trip');
   $('#backBtn').classList.toggle('hidden', view === 'home');
@@ -95,8 +100,8 @@ function renderHome() {
     : '';
   $('#tripCards').innerHTML = trips.map((t) => {
     const n = t.days.reduce((s, d) => s + d.stops.length, 0);
-    const c1 = t.days[0]?.color || COLORS[0];
-    const c2 = t.days[t.days.length - 1]?.color || COLORS[3];
+    const c1 = tripColor(t);
+    const c2 = shadeColor(c1);
     return `
     <article class="card trip-card" data-id="${t.id}" tabindex="0" role="group" aria-roledescription="cartão de viagem; pressione Enter para abrir" aria-label="${esc(t.name)}" style="--c:${c1};--c2:${c2}">
       <div class="trip-cover"><div class="trip-icon">${!t.emoji || t.emoji === '🌍' ? '<img class="trip-default-icon" src="icon.png" alt="">' : visual(t.emoji, 'ico')}</div><span class="cover-label">SEU ROTEIRO</span></div>
@@ -121,6 +126,10 @@ function renderTrip() {
   const t = cur();
   if (!t) return goHome();
   if (dayIdx >= t.days.length) dayIdx = 0;
+  const color = tripColor(t);
+  $('#top').style.setProperty('--trip-color', color);
+  $('#top').style.setProperty('--trip-color-dark', shadeColor(color));
+  $('#top').style.setProperty('--trip-ink', tripColorInk(color));
   $('#topTitle').innerHTML = `${visual(t.emoji || '🌍', 'emo')}<span>${esc(t.name)}</span>`;
   renderDaysNav(t);
   $('#searchForm').classList.toggle('hidden', overview);

@@ -17,6 +17,7 @@ dialog h2 { font-size: 1.45rem; margin-bottom: 18px; }
   box-shadow: inset 0 0 0 1px var(--line);
 }
 .pick-preview img.flag { width: 2.3rem; }
+#tColor { width: 64px; height: 44px; padding: 4px; cursor: pointer; }
 .picker-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; max-height: 210px; overflow-y: auto; padding: 2px; }
 .picker-grid.emo { grid-template-columns: repeat(8, 1fr); }
 .picker-grid button {
