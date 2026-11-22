@@ -16,7 +16,7 @@ const ExportUI = (() => {
     diario: '<svg viewBox="0 0 64 84"><rect width="64" height="84" rx="5" fill="#f4ecd8"/><rect x="9" y="0" width="1" height="84" fill="#d99a8c"/><rect x="14" y="8" width="26" height="4" rx="1" fill="#5b4636"/><g transform="rotate(-4 24 30)"><rect x="12" y="17" width="26" height="26" fill="#fff"/><rect x="15" y="20" width="20" height="16" fill="#d8c9a8"/><rect x="19" y="14" width="12" height="4" fill="#ffd666" opacity=".9"/></g><rect x="44" y="24" width="14" height="2.5" fill="#5b4636"/><rect x="44" y="30" width="10" height="2" fill="#b3a58b"/><g transform="rotate(3 44 58)"><rect x="30" y="48" width="26" height="24" fill="#fff"/><rect x="33" y="51" width="20" height="14" fill="#d8c9a8"/></g><rect x="14" y="76" width="30" height=".8" fill="#c9bb9d"/></svg>',
   };
 
-  let trip = null, state = null, previewDoc = null, renderToken = 0, timer = null, lastPlan = null;
+  let trip = null, state = null, previewDoc = null, renderToken = 0, timer = null, lastPlan = null, previewPage = 0;
   let running = null, offAssets = null, mounted = false;
 
   const defaults = () => ({
@@ -129,7 +129,9 @@ const ExportUI = (() => {
       state.colorsBy[state.template] = { ...colors(), [c]: e.target.value };
       changed(true);
     });
-    $e('#exTarget').addEventListener('change', (e) => { state.previewKey = e.target.value; refresh(); });
+    $e('#exTarget').addEventListener('change', (e) => navigatePreview(Number(e.target.value)));
+    $e('#exPrevPage').addEventListener('click', () => navigatePreview(previewPage - 1));
+    $e('#exNextPage').addEventListener('click', () => navigatePreview(previewPage + 1));
     $e('#exClose').onclick = () => closeDialog();
     $e('#exCancel').onclick = () => closeDialog();
     $e('#exGo').onclick = generate;
@@ -291,15 +293,44 @@ const ExportUI = (() => {
     previewDoc = doc;
     return doc;
   }
+  function navigatePreview(index) {
+    if (!lastPlan?.pages.length) return;
+    previewPage = Math.max(0, Math.min(lastPlan.pages.length - 1, index));
+    const target = previewDoc?.getElementById(`pv-page-${previewPage}`);
+    target?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    $e('#exTarget').value = String(previewPage);
+    $e('#exPrevPage').disabled = previewPage === 0;
+    $e('#exNextPage').disabled = previewPage === lastPlan.pages.length - 1;
+  }
   function paintPreview() {
     if (!previewDoc || !lastPlan) return;
     const host = $e('#exPreviewHost');
-    const pages = lastPlan.pages.filter((p) => p.section.key === state.previewKey);
+    const pages = lastPlan.pages;
     const root = previewDoc.getElementById('root');
     if (!pages.length) { root.innerHTML = ''; return; }
     const avail = Math.max(240, host.clientWidth - 36);
     const scale = Math.min(1, avail / pages[0].w);
-    root.innerHTML = pages.map((p) => `<div class="pvw" style="width:${Math.round(p.w * scale)}px;height:${Math.round(p.height * scale)}px"><div class="pvi" style="width:${p.w}px;height:${p.height}px;transform:scale(${scale})">${p.html}</div></div>`).join('');
+    root.innerHTML = pages.map((p, i) => `<div class="pvw" id="pv-page-${i}" data-preview-page="${i}" style="width:${Math.round(p.w * scale)}px;height:${Math.round(p.height * scale)}px"><div class="pvi" style="width:${p.w}px;height:${p.height}px;transform:scale(${scale})">${p.html}</div></div>`).join('');
+    $e('#exTarget').innerHTML = pages.map((p, i) => `<option value="${i}">${esc(`Página ${i + 1} · ${p.label}`)}</option>`).join('');
+    $e('#exTargetRow').classList.toggle('hidden', pages.length < 2);
+    previewPage = Math.max(0, Math.min(previewPage, pages.length - 1));
+    $e('#exTarget').value = String(previewPage);
+    $e('#exPrevPage').disabled = previewPage === 0;
+    $e('#exNextPage').disabled = previewPage === pages.length - 1;
+    previewDoc.defaultView.onscroll = () => {
+      const items = [...root.querySelectorAll('[data-preview-page]')];
+      if (!items.length) return;
+      let closest = 0;
+      let closestDistance = Infinity;
+      items.forEach((item, i) => {
+        const distance = Math.abs(item.getBoundingClientRect().top);
+        if (distance < closestDistance) { closestDistance = distance; closest = i; }
+      });
+      previewPage = closest;
+      $e('#exTarget').value = String(previewPage);
+      $e('#exPrevPage').disabled = previewPage === 0;
+      $e('#exNextPage').disabled = previewPage === pages.length - 1;
+    };
   }
   function updateSummary() {
     const sum = $e('#exSummary');
@@ -333,7 +364,7 @@ const ExportUI = (() => {
     if (!sectionKeys.includes(state.previewKey)) state.previewKey = sectionKeys[0] || '';
     try {
       await ensurePreviewFrame();
-      const plan = await ExportEngine.plan(v, trip, { activeKeys: new Set([state.previewKey]) });
+      const plan = await ExportEngine.plan(v, trip, { activeKeys: new Set(sectionKeys) });
       if (token !== renderToken) return;
       lastPlan = plan;
     } catch (err) {
@@ -341,10 +372,6 @@ const ExportUI = (() => {
       $e('#exSummary').textContent = 'Não foi possível montar a prévia. Tente alterar as opções.';
       return;
     }
-    const keys = [];
-    lastPlan.pages.forEach((p) => { if (!keys.some((k) => k.key === p.section.key)) keys.push({ key: p.section.key, label: p.section.label }); });
-    $e('#exTarget').innerHTML = keys.map((k) => `<option value="${esc(k.key)}" ${k.key === state.previewKey ? 'selected' : ''}>${esc(k.label)}</option>`).join('');
-    $e('#exTargetRow').classList.toggle('hidden', keys.length < 2);
     updateSummary();
     paintPreview();
   }
@@ -408,6 +435,7 @@ const ExportUI = (() => {
     state.oneDay = !overview && trip.days[dayIdx] ? trip.days[dayIdx].id : trip.days[0]?.id || '';
     state.days = trip.days.map((d) => d.id);
     state.previewKey = '';
+    previewPage = 0;
     lastPlan = null;
     $e('#exSub').textContent = trip.name;
     showError('');

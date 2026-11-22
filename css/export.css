@@ -72,7 +72,9 @@
 .ex-preview { display: flex; flex-direction: column; min-width: 0; min-height: 0; background: #e9edf0; }
 .ex-pv-bar { display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: #f6f4ee; border-bottom: 1px solid var(--line); flex: none; }
 .ex-pv-bar .label { white-space: nowrap; }
-.ex-pv-bar select { max-width: 420px; }
+.ex-pv-bar select { max-width: 420px; flex: 1; }
+.ex-pv-arrow { flex: none; min-width: 40px !important; min-height: 40px !important; padding: 0 !important; border-radius: 50% !important; }
+.ex-pv-arrow:disabled { opacity: .35; cursor: default; }
 .ex-pv-stage { position: relative; flex: 1; min-height: 0; }
 .ex-pv-stage iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #e9edf0; }
 .ex-json-card { display: none; flex: 1; align-items: center; justify-content: center; flex-direction: column; gap: 8px; padding: 30px; text-align: center; color: var(--muted); }

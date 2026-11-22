@@ -162,7 +162,16 @@
     <div class="ex-body" id="exBody" data-tab="opts">
       <section class="ex-opts" id="exOpts" aria-label="Opções de exportação"></section>
       <section class="ex-preview" id="exPreviewCol" aria-label="Pré-visualização">
-        <div class="ex-pv-bar" id="exTargetRow"><label for="exTarget" class="label">Visualizando</label><select id="exTarget"></select></div>
+        <div class="ex-pv-bar" id="exTargetRow">
+          <button type="button" class="btn ghost icon ex-pv-arrow" id="exPrevPage" aria-label="Página anterior" title="Página anterior">
+            <span class="material-symbols-outlined" aria-hidden="true">chevron_left</span>
+          </button>
+          <label for="exTarget" class="label">Página</label>
+          <select id="exTarget"></select>
+          <button type="button" class="btn ghost icon ex-pv-arrow" id="exNextPage" aria-label="Próxima página" title="Próxima página">
+            <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+          </button>
+        </div>
         <div class="ex-pv-stage" id="exPreviewHost"></div>
         <div class="ex-json-card"><span class="material-symbols-outlined" aria-hidden="true">data_object</span><b>Arquivo JSON</b>
           <p>Guarda todos os dados da viagem em um arquivo de texto. Para restaurar, use “Importar roteiro” na tela inicial.</p></div>
