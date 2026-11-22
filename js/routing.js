@@ -17,7 +17,7 @@ async function withBusy(fn, okMsg) {
 }
 // recalcula quando há mudança de ordem/remoção; sem chave, só marca como pendente
 function reroute(...days) {
-  if (!hasKey()) { save(); renderTrip(); return; }
+  if (!hasKey() || !navigator.onLine) { save(); renderTrip(); return; } // offline: o trecho fica "não calculado"
   return withBusy(async () => { for (const d of days) await routeDay(d); }, 'Trajetos recalculados.');
 }
 function warnings(d) {

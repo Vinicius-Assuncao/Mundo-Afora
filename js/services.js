@@ -1,6 +1,7 @@
 // ---------- APIs ----------
 async function ors(mode, a, b) {
   if (!hasKey()) throw new Error('Configure a chave em config.js para calcular trajetos.');
+  if (!navigator.onLine) throw new Error('Sem internet: o trajeto será calculado quando você estiver online.');
   const r = await fetch(`https://api.openrouteservice.org/v2/directions/${MODES[mode].profile}/geojson`, {
     method: 'POST',
     headers: { Authorization: CONFIG.ORS_KEY, 'Content-Type': 'application/json' },
@@ -16,6 +17,7 @@ async function ors(mode, a, b) {
 }
 
 async function searchPlaces(q) {
+  if (!navigator.onLine) throw new Error('Sem internet: a busca de lugares só funciona online.');
   const r = await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=5&accept-language=pt-BR&q=' + encodeURIComponent(q));
   if (!r.ok) throw new Error('Busca indisponível no momento.');
   return (await r.json()).map((p) => ({
@@ -370,6 +372,7 @@ async function enrich(stop) {
 }
 
 function ensureWiki(trip) {
+  if (!navigator.onLine) return; // fotos e descrições novas dependem de internet; retoma ao reconectar
   const pending = trip.days.flatMap((day) => day.stops)
     .filter((stop) => !stop.wikiDone && !wikiBusy.has(stop.id));
   if (!pending.length) return;

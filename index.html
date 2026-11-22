@@ -22,6 +22,7 @@
   <link rel="stylesheet" href="css/cloud.css">
   <link rel="stylesheet" href="css/layout-refinements.css">
   <link rel="stylesheet" href="css/export.css">
+  <link rel="stylesheet" href="css/offline.css">
 </head>
 <body>
   <header id="top" class="top">
@@ -34,12 +35,14 @@
       <button id="editTripBtn" class="btn ghost light hidden" aria-label="Editar viagem" title="Editar viagem"><span class="material-symbols-outlined" aria-hidden="true">edit</span><span class="action-label">Editar</span></button>
       <button id="exportBtn" class="btn ghost light hidden" aria-label="Exportar viagem" title="Exportar viagem"><span class="material-symbols-outlined" aria-hidden="true">download</span><span class="action-label">Exportar</span></button>
     </div>
+    <span id="offlineChip" class="offline-chip hidden" title="Sem conexão com a internet"><span class="material-symbols-outlined" aria-hidden="true">cloud_off</span><span class="chip-text">Offline</span></span>
     <div class="top-actions">
       <span id="syncStatus" class="sync-status hidden" aria-live="polite"></span>
       <span id="accountEmail" class="account-email hidden"></span>
       <button id="authBtn" class="btn ghost light hidden is-signin">Entrar com Google</button>
     </div>
   </header>
+  <div id="offlineBar" class="offline-bar hidden" role="status" aria-live="polite"><span class="material-symbols-outlined" aria-hidden="true">cloud_off</span><span id="offlineText"></span></div>
 
   <main id="appMain">
   <section id="home" class="view" aria-labelledby="homeTitle">
@@ -187,6 +190,16 @@
       </div>
     </footer>
   </dialog>
+  <dialog id="offlineDlg" class="offline-dlg" aria-labelledby="offTitle">
+    <div class="off-icon"><span class="material-symbols-outlined" aria-hidden="true">cloud_off</span></div>
+    <h2 id="offTitle">Você está offline</h2>
+    <p>“<span id="offTrip"></span>” está salva na sua conta Google. Como você quer abri-la sem internet?</p>
+    <div class="off-options">
+      <button type="button" id="offEdit" class="btn off-opt"><span class="material-symbols-outlined" aria-hidden="true">edit</span><b>Editar localmente</b><small>As alterações ficam neste aparelho e são enviadas para a sua conta quando a internet voltar.</small></button>
+      <button type="button" id="offView" class="btn off-opt"><span class="material-symbols-outlined" aria-hidden="true">visibility</span><b>Apenas visualizar</b><small>Os botões de edição ficam ocultos e nada é alterado.</small></button>
+    </div>
+    <p class="off-note">Busca de lugares, fotos novas e cálculo de trajetos precisam de internet.</p>
+  </dialog>
   <div id="toast" class="hidden" role="status"></div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -206,6 +219,7 @@
   <script src="js/export-templates.js"></script>
   <script src="js/export-engine.js"></script>
   <script src="js/export-ui.js"></script>
+  <script src="js/offline.js"></script>
   <script src="js/events.js"></script>
   <script src="js/wikimedia-ui.js"></script>
 </body>

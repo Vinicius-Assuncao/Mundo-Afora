@@ -1,7 +1,8 @@
-const CACHE = 'mundo-afora-v16';
+const CACHE = 'mundo-afora-v17';
 const SHELL = ['./', 'index.html', 'config.js', 'manifest.json', 'icon.png',
   'css/base.css', 'css/home.css', 'css/itinerary.css', 'css/map.css', 'css/dialogs.css', 'css/responsive.css',
   'js/state.js', 'js/services.js', 'js/routing.js', 'js/views.js', 'js/map.js', 'js/dialogs.js', 'js/cloud.js', 'js/events.js', 'js/wikimedia-ui.js', 'css/cloud.css',
+  'css/layout-refinements.css', 'css/offline.css', 'js/offline.js',
   'css/export.css', 'css/export-templates.css',
   'js/export-model.js', 'js/export-assets.js', 'js/export-files.js', 'js/export-templates.js', 'js/export-engine.js', 'js/export-ui.js'];
 
@@ -36,7 +37,7 @@ self.addEventListener('fetch', (e) => {
     e.respondWith(fetch(req).then((res) => {
       if (res.ok) caches.open(CACHE).then((c) => c.put(req, res.clone()));
       return res;
-    }).catch(() => caches.match(req)));
+    }).catch(() => caches.match(req).then((hit) => hit || (req.mode === 'navigate' ? caches.match('index.html') : undefined))));
     return;
   }
   e.respondWith(fetch(req).catch(() => caches.match(req)));

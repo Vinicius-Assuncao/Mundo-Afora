@@ -22,6 +22,7 @@ Tudo funciona no navegador e pode ser instalado no celular como aplicativo. Use 
 - 💡 **Lista de ideias** para guardar lugares sem dia definido
 - 🗺️ **Mapa** com as paradas numeradas, pré-visualização com foto e cinco estilos: Padrão, Limpo, Escuro, Satélite e Satélite híbrido
 - 🎨 **Cores personalizadas para cada viagem e dia** para organizar o roteiro visualmente
+- 📴 **Modo offline**: aviso visual, escolha entre editar localmente (envia ao reconectar) ou apenas visualizar viagens hospedadas na conta, e bloqueio do que depende de internet
 - 💾 **Exportação e importação** de viagens em JSON, para backup ou para outro aparelho
 - 🖨️ **Exportação em PNG, PDF e JSON** com pré-visualização ao vivo, quatro modelos visuais, capa com foto de uma parada ou imagem enviada, imagens em formato Stories (1080 × 1920) e PDF em A4 ou Carta
 - 📱 **Layout responsivo** para celular e desktop e funcionamento offline dos mapas já visitados

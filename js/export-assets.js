@@ -261,7 +261,7 @@ const ExportAssets = (() => {
         for (const source of H2C_SOURCES) {
           try { return await loadScript(source); } catch { /* tenta a próxima origem */ }
         }
-        throw new Error('Não foi possível carregar o gerador de imagens. Verifique a conexão e tente novamente.');
+        throw new Error(navigator.onLine ? 'Não foi possível carregar o gerador de imagens. Verifique a conexão e tente novamente.' : 'Sem internet: o gerador de imagens ainda não foi baixado neste aparelho. Conecte-se uma vez para exportar PDF e PNG offline.');
       })().catch((err) => { h2cPromise = null; throw err; });
     }
     return h2cPromise;

@@ -373,6 +373,7 @@ const ExportUI = (() => {
       return;
     }
     updateSummary();
+    if (!navigator.onLine) $e('#exSummary').textContent += ' · offline: fotos e mapas ainda não salvos podem faltar';
     paintPreview();
   }
 

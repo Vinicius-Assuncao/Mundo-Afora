@@ -24,15 +24,16 @@ const Cloud = (() => {
       el.removeAttribute('title');
       return;
     }
-    const synced = state === 'synced';
+    const synced = state === 'synced', off = state === 'offline';
+    const label = off ? 'Offline: as alterações ficam neste aparelho' : synced ? 'Sincronizado' : 'Sincronização pendente';
     const icon = document.createElement('span');
     icon.className = 'material-symbols-outlined';
     icon.setAttribute('aria-hidden', 'true');
-    icon.textContent = synced ? 'cloud_done' : 'progress_activity';
+    icon.textContent = off ? 'cloud_off' : synced ? 'cloud_done' : 'progress_activity';
     el.replaceChildren(icon);
-    el.className = `sync-status ${synced ? 'synced' : 'pending'}`;
-    el.setAttribute('aria-label', synced ? 'Sincronizado' : 'Sincronização pendente');
-    el.title = synced ? 'Sincronizado' : 'Sincronização pendente';
+    el.className = `sync-status ${off ? 'offline' : synced ? 'synced' : 'pending'}`;
+    el.setAttribute('aria-label', label);
+    el.title = label;
   }
   function renderAuth() {
     const on = !!session;
@@ -58,7 +59,7 @@ const Cloud = (() => {
     if (on) authButton.title = 'Sair da conta';
     const banner = $('#cloudBanner');
     if (banner) banner.classList.toggle('hidden', on);
-    setStatus(on ? 'pending' : '');
+    setStatus(on ? (navigator.onLine ? 'pending' : 'offline') : '');
   }
 
   // chamado antes de cada gravação local: marca o que mudou e registra exclusões
@@ -79,6 +80,7 @@ const Cloud = (() => {
   // agenda o envio logo após a última alteração (evita uma requisição por tecla)
   function changed() {
     if (!session || syncing) return;
+    if (!navigator.onLine) { setStatus('offline'); return; } // volta a sincronizar no evento 'online'
     clearTimeout(timer);
     setStatus('pending');
     timer = setTimeout(sync, 900);
@@ -91,6 +93,7 @@ const Cloud = (() => {
   function sync() {
     queue = queue.then(async () => {
       if (!session) return;
+      if (!navigator.onLine) { setStatus('offline'); return; }
       syncing = true;
       setStatus('pending');
       let ok = false;
@@ -104,7 +107,7 @@ const Cloud = (() => {
         ok = true;
       } catch (err) {
         console.error(err);
-        setStatus('pending');
+        setStatus(navigator.onLine ? 'pending' : 'offline');
       } finally {
         syncing = false;
       }
@@ -179,6 +182,7 @@ const Cloud = (() => {
   }
 
   async function signIn() {
+    if (!navigator.onLine) { toast('Entrar com o Google precisa de internet.'); return; }
     const { error } = await sb.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: location.origin + location.pathname },
@@ -186,7 +190,9 @@ const Cloud = (() => {
     if (error) toast('Não foi possível entrar agora. Tente novamente.');
   }
   async function signOut() {
-    if (!confirm('Sair da conta? As viagens deste aparelho serão removidas daqui. Elas continuam na nuvem e voltam ao entrar de novo.')) return;
+    if (!navigator.onLine) { toast('Para sair da conta, conecte-se à internet. Assim nenhuma alteração se perde.'); return; }
+    const unsent = hasPending() ? ' ATENÇÃO: há alterações que ainda não foram enviadas para a nuvem e elas serão perdidas.' : '';
+    if (!confirm(`Sair da conta? As viagens deste aparelho serão removidas daqui. Elas continuam na nuvem e voltam ao entrar de novo.${unsent}`)) return;
     await sb.auth.signOut();
     db.trips = [];
     db.currentId = null;
@@ -215,12 +221,16 @@ const Cloud = (() => {
     if (bannerLogin) bannerLogin.onclick = signIn;
     document.addEventListener('visibilitychange', () => { if (!document.hidden && session) sync(); });
     window.addEventListener('online', () => { if (session) sync(); });
-    window.addEventListener('offline', () => { if (session) setStatus('pending'); });
+    window.addEventListener('offline', () => { if (session) setStatus('offline'); });
   }
 
   if (enabled()) {
     $('#authBtn').classList.remove('hidden');
   }
   init();
-  return { touch, changed };
+  // a viagem já foi enviada à conta alguma vez (mesmo que haja alterações locais ainda não enviadas)
+  const isHosted = (trip) => !!trip && !!meta.owner && meta.snap[trip.id] !== undefined;
+  // quantas viagens (ou exclusões) aguardam envio
+  const pending = () => (meta.owner ? meta.deleted.length + db.trips.filter((t) => meta.snap[t.id] !== snapOf(t)).length : 0);
+  return { touch, changed, isHosted, pending };
 })();

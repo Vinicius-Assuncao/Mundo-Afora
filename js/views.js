@@ -13,6 +13,7 @@ function show(view) {
   $('#exportBtn').classList.toggle('hidden', view !== 'trip');
   if (view === 'home') $('#topTitle').innerHTML = '';
   window.scrollTo(0, 0);
+  if (typeof Offline !== 'undefined') Offline.apply();
 }
 // Rotas legíveis no hash: #/viagens e #/nome-da-viagem.
 function slugifyTripName(name) {
@@ -149,6 +150,7 @@ function renderTrip() {
   }
   drawMap(t);
   ensureWiki(t);
+  if (typeof Offline !== 'undefined') Offline.onTripShown(t);
 }
 
 function renderDaysNav(t) {
@@ -256,6 +258,7 @@ function renderStops(t) {
         </div>
         <div class="stop-chips">
           ${s.time ? `<span class="chip time">🕒 ${esc(s.time)}</span>` : ''}
+          ${typeof Offline !== 'undefined' && Offline.isViewOnly() ? `<span class="chip">⏱ ${s.stay ?? 60} min</span>` : ''}
           ${i > 0 ? `<span class="chip leg">${s.legMin != null ? `${MODES[s.transport || 'walk'].label}: ${Math.round(s.legMin)} min · ${s.legKm.toFixed(1)} km` : 'Trajeto não calculado'}</span>` : ''}
         </div>
         <div class="fields">
