@@ -16,6 +16,33 @@ async function ors(mode, a, b) {
   };
 }
 
+async function reversePlace(lat, lon) {
+  if (!navigator.onLine) throw new Error('Sem internet: o reconhecimento do local precisa de conexão.');
+  const params = new URLSearchParams({
+    format: 'jsonv2', lat: String(lat), lon: String(lon), zoom: '18',
+    addressdetails: '1', namedetails: '1', extratags: '1', 'accept-language': 'pt-BR',
+  });
+  const response = await fetch(`https://nominatim.openstreetmap.org/reverse?${params}`);
+  if (!response.ok) throw new Error(`O reconhecimento do local falhou (HTTP ${response.status}).`);
+  const result = await response.json();
+  if (result.error) throw new Error('O Nominatim não encontrou um endereço próximo. Você pode informar um nome manualmente.');
+  const tags = result.extratags || {};
+  const named = result.namedetails || {};
+  const recognizedName = named.name || named['name:pt'] || result.name
+    || tags['official_name'] || tags['name'];
+  const category = `${result.category || result.class || ''}/${result.type || ''}`.toLowerCase();
+  const tourist = /tourism|historic|attraction|museum|monument|artwork|castle|church|memorial|viewpoint|archaeological_site|heritage/.test(category)
+    || !!(tags.wikidata || tags.wikipedia);
+  return {
+    name: recognizedName || '',
+    wikiName: recognizedName || '',
+    lat: Number(lat), lon: Number(lon), address: result.display_name || '',
+    osmType: result.type || '', osmCategory: result.category || result.class || '',
+    wikidataId: tags.wikidata || '', wikipedia: tags.wikipedia || '',
+    recognized: !!recognizedName, tourist,
+  };
+}
+
 async function searchPlaces(q) {
   if (!navigator.onLine) throw new Error('Sem internet: a busca de lugares só funciona online.');
   const r = await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=5&accept-language=pt-BR&q=' + encodeURIComponent(q));
@@ -178,7 +205,7 @@ async function commonsImageByTitle(title) {
 
 // ---------- Wikidata: identificação por nome e localização ----------
 async function findWikidataEntity(stop) {
-  const name = typeof stop === 'string' ? stop : stop.name;
+  const name = typeof stop === 'string' ? stop : (stop.wikiName || stop.name);
   const lat = typeof stop === 'object' ? Number(stop.lat) : NaN;
   const lon = typeof stop === 'object' ? Number(stop.lon) : NaN;
   const cacheKey = `entity:${normalizeWikiText(name)}:${Number.isFinite(lat) ? lat.toFixed(3) : ''}:${Number.isFinite(lon) ? lon.toFixed(3) : ''}`;

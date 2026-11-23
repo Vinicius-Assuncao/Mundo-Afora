@@ -192,7 +192,13 @@ const Cloud = (() => {
   async function signOut() {
     if (!navigator.onLine) { toast('Para sair da conta, conecte-se à internet. Assim nenhuma alteração se perde.'); return; }
     const unsent = hasPending() ? ' ATENÇÃO: há alterações que ainda não foram enviadas para a nuvem e elas serão perdidas.' : '';
-    if (!confirm(`Sair da conta? As viagens deste aparelho serão removidas daqui. Elas continuam na nuvem e voltam ao entrar de novo.${unsent}`)) return;
+    const confirmed = await askConfirm({
+      title: 'Sair da conta',
+      message: `As viagens deste aparelho serão removidas daqui. Elas continuam na nuvem e voltam ao entrar de novo.${unsent}`,
+      confirmText: 'Sair da conta',
+      icon: 'logout',
+    });
+    if (!confirmed) return;
     await sb.auth.signOut();
     db.trips = [];
     db.currentId = null;

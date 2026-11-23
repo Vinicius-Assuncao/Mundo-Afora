@@ -100,8 +100,15 @@ function saveDialog() {
     renderHome();
   }
 }
-function deleteTrip() {
-  if (!editingId || !confirm('Excluir esta viagem e todos os seus dias?')) return;
+async function deleteTrip() {
+  if (!editingId) return;
+  const confirmed = await askConfirm({
+    title: 'Excluir viagem',
+    message: 'Excluir esta viagem e todos os seus dias?',
+    confirmText: 'Excluir viagem',
+    icon: 'delete',
+  });
+  if (!confirmed) return;
   db.trips = db.trips.filter((t) => t.id !== editingId);
   if (db.currentId === editingId) db.currentId = null;
   save();

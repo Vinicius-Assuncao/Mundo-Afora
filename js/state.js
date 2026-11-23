@@ -36,6 +36,7 @@ const MODES = {
 
 const ICON_EMOJIS = ['📍','🏛️','⛪','🕌','🏰','🗿','⛲','🌉','🚉','🎭','🖼️','🍕','🍝','☕','🍦','🛍️','🌳','🌊','🏟️','🌃','🏞️','🎡','🍷','🎶','🛕','🌅','🏖️','🚠','🕰️'];
 let iconEdit = null;
+let stopRenameId = null;
 let db = JSON.parse(localStorage.getItem(KEY) || 'null') || { trips: [], currentId: null };
 let dayIdx = 0, overview = true, lastResults = [], editingId = null;
 let picked = '🌍', pickerTab = 'emoji';
@@ -52,6 +53,28 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 const cur = () => db.trips.find((t) => t.id === db.currentId);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) =>
   ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+function askConfirm({ title = 'Confirmar ação', message = '', confirmText = 'Confirmar', cancelText = 'Cancelar', icon = 'warning' }) {
+  const dlg = $('#confirmDlg');
+  $('#confirmTitle').textContent = title;
+  $('#confirmMessage').textContent = message;
+  $('#confirmCancel').textContent = cancelText;
+  $('#confirmAccept').textContent = confirmText;
+  $('#confirmIcon').textContent = icon;
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = (accepted) => {
+      if (settled) return;
+      settled = true;
+      dlg.close();
+      resolve(accepted);
+    };
+    $('#confirmCancel').onclick = () => finish(false);
+    $('#confirmAccept').onclick = () => finish(true);
+    dlg.oncancel = (event) => { event.preventDefault(); finish(false); };
+    dlg.showModal();
+    setTimeout(() => $('#confirmCancel').focus(), 50);
+  });
+}
 const toMin = (hhmm) => { const [h, m] = hhmm.split(':').map(Number); return h * 60 + m; };
 const fmt = (min) => `${Math.floor(min / 60)}h${String(Math.round(min % 60)).padStart(2, '0')}`;
 const hasKey = () => CONFIG.ORS_KEY && !CONFIG.ORS_KEY.startsWith('COLE_');
@@ -85,7 +108,7 @@ function newDay(i, date = null) {
   return { id: uid(), name: `Dia ${i + 1}`, date, color: COLORS[i % COLORS.length], stops: [] };
 }
 function newStop(place) {
-  return { id: uid(), name: place.name, lat: place.lat, lon: place.lon, time: '', stay: 60,
+  return { id: uid(), name: place.name, wikiName: place.wikiName ?? place.name, lat: place.lat, lon: place.lon, time: '', stay: 60,
     transport: 'walk', desc: '', photo: '', originalPhoto: '', url: '', icon: '', wikiDone: false };
 }
 function sortedTrips() {

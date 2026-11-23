@@ -26,6 +26,20 @@ document.querySelectorAll('[data-layout]').forEach((button) => {
 setTripLayout(localStorage.getItem(LAYOUT_KEY) || 'split', false);
 $('#importFile').onchange = importTrip;
 
+$('#mapDayIndicator').onclick = (e) => {
+  const overviewButton = e.target.closest('[data-map-view="overview"]');
+  if (overviewButton) {
+    overview = true;
+    renderTrip();
+    return;
+  }
+  const dayButton = e.target.closest('[data-map-day]');
+  if (!dayButton) return;
+  dayIdx = +dayButton.dataset.mapDay;
+  overview = false;
+  renderTrip();
+};
+
 $('#tripCards').onclick = (e) => {
   if (e.target.closest('[data-new]')) return openDialog(null);
   const ed = e.target.closest('[data-edit]');
@@ -92,8 +106,19 @@ $('#dayHead').onclick = (e) => {
   if (sw) { d.color = sw.dataset.color; save(); return renderTrip(); }
   if (e.target.closest('[data-act="delDay"]')) {
     if (t.days.length === 1) return toast('A viagem precisa ter ao menos um dia.');
-    if (!confirm(`Excluir “${d.name}” e suas paradas?`)) return;
-    t.days.splice(dayIdx, 1); dayIdx = 0; save(); toast('Dia excluído.'); renderTrip();
+    askConfirm({
+      title: 'Excluir dia',
+      message: `Excluir “${d.name}” e todas as suas paradas? Esta ação não pode ser desfeita.`,
+      confirmText: 'Excluir dia',
+      icon: 'delete',
+    }).then((confirmed) => {
+      if (!confirmed) return;
+      t.days.splice(dayIdx, 1);
+      dayIdx = 0;
+      save();
+      toast('Dia excluído.');
+      renderTrip();
+    });
   }
 };
 $('#dayHead').onchange = (e) => {
@@ -125,11 +150,69 @@ $('#stops').addEventListener('change', (e) => {
   save(); renderTrip();
 });
 
+function saveStopRename(stopId, value) {
+  const d = cur().days[dayIdx];
+  const stop = d.stops.find((s) => s.id === stopId);
+  if (!stop) return;
+  const renamed = value.trim();
+  if (!renamed) {
+    toast('Informe um nome para a parada.');
+    requestAnimationFrame(() => {
+      const input = [...$('#stops').querySelectorAll('[data-stop-name]')]
+        .find((el) => el.dataset.id === stopId);
+      input?.focus();
+    });
+    return;
+  }
+  const changed = renamed !== stop.name;
+  if (changed) {
+    if (stop.wikiName === undefined) stop.wikiName = stop.name;
+    stop.name = renamed;
+    save();
+  }
+  stopRenameId = null;
+  renderTrip();
+  if (changed) toast('Nome atualizado.', 'ok');
+}
+
+$('#stops').addEventListener('keydown', (e) => {
+  if (!e.target.dataset?.stopName) return;
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    saveStopRename(e.target.dataset.id, e.target.value);
+  } else if (e.key === 'Escape') {
+    e.preventDefault();
+    stopRenameId = null;
+    renderTrip();
+  }
+});
+
 $('#stops').onclick = (e) => {
   const b = e.target.closest('[data-act]'); if (!b) return;
   const d = cur().days[dayIdx];
   const idx = d.stops.findIndex((s) => s.id === b.dataset.id);
   if (idx < 0) return;
+  if (b.dataset.act === 'saveRename') {
+    const input = [...$('#stops').querySelectorAll('[data-stop-name]')]
+      .find((el) => el.dataset.id === b.dataset.id);
+    return saveStopRename(b.dataset.id, input?.value || '');
+  }
+  if (b.dataset.act === 'cancelRename') {
+    stopRenameId = null;
+    return renderTrip();
+  }
+  if (b.dataset.act === 'rename') {
+    stopRenameId = b.dataset.id;
+    iconEdit = null;
+    renderTrip();
+    requestAnimationFrame(() => {
+      const input = [...$('#stops').querySelectorAll('[data-stop-name]')]
+        .find((el) => el.dataset.id === b.dataset.id);
+      input?.focus();
+      input?.select();
+    });
+    return;
+  }
   if (b.dataset.act === 'icon') { iconEdit = iconEdit === b.dataset.id ? null : b.dataset.id; return renderTrip(); }
   if (b.dataset.act === 'pickIcon') {
     if (d.stops[idx].photo) d.stops[idx].originalPhoto = d.stops[idx].photo;
@@ -148,7 +231,7 @@ $('#stops').onclick = (e) => {
       return renderTrip();
     }
     return withBusy(async () => {
-      const w = await wikiInfo(stop.name);
+      const w = await wikiInfo(stop);
       if (!w.photo) throw new Error('Nenhuma imagem encontrada para esta parada.');
       stop.originalPhoto = w.photo;
       stop.photo = w.photo;
@@ -169,7 +252,7 @@ $('#stops').onclick = (e) => {
     const t = cur();
     const [s] = d.stops.splice(idx, 1);
     fixLegs(d);
-    t.ideas.push({ id: s.id, name: s.name, lat: s.lat, lon: s.lon });
+    t.ideas.push({ id: s.id, name: s.name, wikiName: s.wikiName ?? s.name, lat: s.lat, lon: s.lon });
     toast('Parada movida para a lista de ideias.', 'ok');
     return reroute(d);
   }
@@ -187,6 +270,119 @@ Sortable.create($('#stops'), {
     reroute(d);
   },
 });
+
+$('#pickMapPoint').onclick = () => {
+  if (typeof Offline !== 'undefined' && Offline.isViewOnly()) return toast('A visualização offline não permite editar paradas.');
+  setTripLayout('split');
+  startMapPointSelection();
+  toast('Agora clique na localização desejada no mapa.');
+};
+
+function askPointDialog({ title, message = '', value = '', confirmText = 'Adicionar', cancelText = 'Cancelar', showInput = true }) {
+  const dlg = $('#pointDlg');
+  $('#pointTitle').textContent = title;
+  $('#pointMessage').textContent = message;
+  $('#pointField').classList.toggle('hidden', !showInput);
+  $('#pointInput').value = value;
+  $('#pointError').classList.add('hidden');
+  $('#pointCancel').textContent = cancelText;
+  $('#pointConfirm').textContent = confirmText;
+
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = (value) => {
+      if (settled) return;
+      settled = true;
+      dlg.close();
+      resolve(value);
+    };
+    $('#pointCancel').onclick = () => finish(showInput ? null : '__custom__');
+    $('#pointConfirm').onclick = () => {
+      if (!showInput) return finish('__recognized__');
+      const name = $('#pointInput').value.trim();
+      if (!name) {
+        $('#pointError').textContent = 'Informe um nome para este ponto.';
+        $('#pointError').classList.remove('hidden');
+        $('#pointInput').focus();
+        return;
+      }
+      finish(name);
+    };
+    $('#pointInput').onkeydown = (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        $('#pointConfirm').click();
+      }
+    };
+    dlg.oncancel = (event) => {
+      event.preventDefault();
+      finish(null);
+    };
+    dlg.showModal();
+    setTimeout(() => (showInput ? $('#pointInput').focus() : $('#pointConfirm').focus()), 50);
+  });
+}
+
+window.handleMapPointSelection = async (lat, lon) => {
+  let place;
+  try {
+    place = await reversePlace(lat, lon);
+  } catch (error) {
+    const custom = await askPointDialog({
+      title: 'Nomeie este ponto',
+      message: `${error.message || 'Não foi possível identificar este local.'} Informe um nome para adicioná-lo.`,
+      confirmText: 'Adicionar ponto',
+    });
+    if (!custom) { toast('Ponto não adicionado.'); return; }
+    place = { name: custom, wikiName: '', lat, lon, address: '', recognized: false };
+  }
+  let name = place.name;
+  if (!name) {
+    name = await askPointDialog({
+      title: 'Ponto sem nome conhecido',
+      message: 'Nenhum ponto conhecido foi identificado neste local.',
+      confirmText: 'Adicionar ponto',
+    });
+    if (!name) { toast('Ponto não adicionado.'); return; }
+    place.name = name;
+    place.wikiName = '';
+  }
+  if (!place.tourist && place.recognized) {
+    const choice = await askPointDialog({
+      title: 'Ponto identificado',
+      message: `O mapa identificou “${name}”. Deseja usar esse nome?`,
+      confirmText: 'Usar nome',
+      cancelText: 'Personalizar',
+      showInput: false,
+    });
+    if (choice === '__custom__') {
+      const custom = await askPointDialog({
+        title: 'Personalizar ponto',
+        message: 'Digite o nome que deseja usar para esta parada.',
+        value: name,
+        confirmText: 'Adicionar ponto',
+      });
+      if (!custom) { toast('Ponto não adicionado.'); return; }
+      place.name = custom;
+      place.wikiName = '';
+    } else if (choice !== '__recognized__') {
+      toast('Ponto não adicionado.');
+      return;
+    }
+  }
+  const trip = cur();
+  if (!trip || overview) { toast('Abra um dia do roteiro antes de adicionar uma parada.'); return; }
+  const day = trip.days[dayIdx];
+  const stop = newStop(place);
+  if (!place.wikiName) stop.wikiDone = true;
+  if (place.wikidataId) stop.wikidataId = place.wikidataId;
+  day.stops.push(stop);
+  fixLegs(day);
+  save(); renderTrip();
+  toast(`“${stop.name}” adicionado a ${day.name}.`, 'ok');
+  if (place.wikiName) enrich(stop).then(() => { save(); if (cur()?.id === trip.id) renderTrip(); });
+  if (day.stops.length > 1 && hasKey()) withBusy(() => legFor(day, day.stops.length - 1));
+};
 
 $('#searchForm').onsubmit = async (e) => {
   e.preventDefault();
@@ -219,7 +415,7 @@ $('#results').onclick = async (e) => {
   $('#q').value = '';
 
   if (b.dataset.act === 'addIdea') {
-    t.ideas.push({ id: uid(), name: place.name, lat: place.lat, lon: place.lon });
+    t.ideas.push({ id: uid(), name: place.name, wikiName: place.wikiName ?? place.name, lat: place.lat, lon: place.lon });
     save(); renderTrip(); toast('Lugar salvo na lista de ideias.', 'ok');
     return;
   }

@@ -10,6 +10,8 @@ const MAP_STYLES = {
   ]) },
 };
 let activeMapStyle = 'osm';
+let mapPickMode = false;
+let mapPickMarker = null;
 
 function isLocalHosting() {
   const hostname = location.hostname.toLowerCase();
@@ -113,6 +115,25 @@ function initMap() {
   new MapStyleControl().addTo(map);
 
   layer = L.layerGroup().addTo(map);
+  map.on('click', (event) => {
+    if (!mapPickMode) return;
+    const { lat, lng } = event.latlng;
+    mapPickMode = false;
+    map.getContainer().classList.remove('map-picking');
+    if (mapPickMarker) map.removeLayer(mapPickMarker);
+    mapPickMarker = L.marker([lat, lng], { keyboard: false }).addTo(map);
+    const hint = document.querySelector('#mapPickHint');
+    if (hint) hint.classList.add('hidden');
+    const button = document.querySelector('#pickMapPoint');
+    if (button) { button.classList.remove('active'); button.disabled = true; button.textContent = 'Reconhecendo local…'; }
+    window.handleMapPointSelection?.(lat, lng).finally(() => {
+      if (mapPickMarker) { map.removeLayer(mapPickMarker); mapPickMarker = null; }
+      if (button) { button.disabled = false; button.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true">add_location_alt</span> Escolher ponto no mapa'; }
+    });
+  });
+  window.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && mapPickMode) cancelMapPointSelection();
+  });
   window.addEventListener('resize', () => map.invalidateSize());
 }
 
@@ -170,3 +191,23 @@ function focusStop(dayI, stopId) {
   });
 }
 
+
+
+function startMapPointSelection() {
+  if (!map) return;
+  mapPickMode = true;
+  map.getContainer().classList.add('map-picking');
+  const hint = document.querySelector('#mapPickHint');
+  const button = document.querySelector('#pickMapPoint');
+  if (hint) hint.classList.remove('hidden');
+  if (button) { button.classList.add('active'); button.textContent = 'Seleção ativa — clique no mapa'; }
+  setTimeout(() => map.invalidateSize({ animate: false }), 80);
+}
+function cancelMapPointSelection() {
+  mapPickMode = false;
+  if (map) map.getContainer().classList.remove('map-picking');
+  const hint = document.querySelector('#mapPickHint');
+  const button = document.querySelector('#pickMapPoint');
+  if (hint) hint.classList.add('hidden');
+  if (button) { button.classList.remove('active'); button.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true">add_location_alt</span> Escolher ponto no mapa'; }
+}

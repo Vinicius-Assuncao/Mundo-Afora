@@ -133,6 +133,7 @@ function renderTrip() {
   $('#top').style.setProperty('--trip-ink', tripColorInk(color));
   $('#topTitle').innerHTML = `${visual(t.emoji || '🌍', 'emo')}<span>${esc(t.name)}</span>`;
   renderDaysNav(t);
+  renderMapDayIndicator(t);
   $('#searchForm').classList.toggle('hidden', overview);
   $('.search-section').classList.toggle('hidden', overview);
   $('#results').classList.toggle('hidden', overview);
@@ -161,6 +162,20 @@ function renderDaysNav(t) {
     <button class="tab ${!overview && i === dayIdx ? 'on' : ''}" data-i="${i}" style="--c:${d.color}" aria-pressed="${!overview && i === dayIdx}">
       <b>${esc(d.name)}</b><small>${d.date ? fmtDate(d.date) : 'sem data'} · ${d.stops.length} ${d.stops.length === 1 ? 'parada' : 'paradas'}</small>
     </button>`).join('') + `<button type="button" class="tab add" data-act="addDay"><b><span class="material-symbols-outlined" aria-hidden="true">add</span> Novo dia</b><small>Adicionar ao roteiro</small></button>`;
+}
+
+function renderMapDayIndicator(t) {
+  const indicator = $('#mapDayIndicator');
+  if (!indicator || !t) return;
+  indicator.innerHTML = `
+    <button type="button" class="map-day-chip map-day-overview ${overview ? 'active' : ''}" data-map-view="overview" aria-pressed="${overview}">
+      <span class="material-symbols-outlined" aria-hidden="true">calendar_month</span>
+      <span>Tudo</span>
+    </button>` + t.days.map((d, i) => `
+    <button type="button" class="map-day-chip ${!overview && i === dayIdx ? 'active' : ''}" data-map-day="${i}" aria-pressed="${!overview && i === dayIdx}" style="--map-day-color:${d.color}">
+      <span class="map-day-dot"></span>
+      <span>${esc(d.name)}</span>
+    </button>`).join('');
 }
 
 function renderOverview(t) {
@@ -250,7 +265,14 @@ function renderStops(t) {
       <div class="stop-body">
         <div class="sh">
           <span class="num">${i + 1}</span>
-          <b>${esc(s.name)}</b>
+          ${stopRenameId === s.id
+            ? `<div class="stop-name-edit">
+                <input class="stop-name-input" data-stop-name data-id="${s.id}" maxlength="80" value="${esc(s.name)}" aria-label="Nome da parada">
+                <button type="button" class="btn sm icon primary stop-name-save" data-act="saveRename" data-id="${s.id}" aria-label="Salvar novo nome" title="Salvar nome"><span class="material-symbols-outlined" aria-hidden="true">check</span></button>
+                <button type="button" class="btn sm icon ghost stop-name-cancel" data-act="cancelRename" data-id="${s.id}" aria-label="Cancelar renomeação" title="Cancelar"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>
+              </div>`
+            : `<b>${esc(s.name)}</b>
+               <button type="button" class="btn sm icon ghost stop-rename" data-act="rename" data-id="${s.id}" aria-label="Renomear ${esc(s.name)}" title="Renomear ponto turístico"><span class="material-symbols-outlined" aria-hidden="true">edit</span></button>`}
           <button type="button" class="stop-drag-handle" aria-label="Arrastar ${esc(s.name)} para reordenar" title="Arrastar para reordenar">
             <span class="material-symbols-outlined" aria-hidden="true">drag_indicator</span>
           </button>

@@ -90,6 +90,7 @@
     </div>
     <div class="trip-workspace">
       <div id="map"></div>
+      <div id="mapDayIndicator" class="map-day-indicator" aria-label="Dias exibidos no mapa"></div>
       <aside class="panel">
       <nav id="daysNav" class="days" aria-label="Visão geral e dias"></nav>
       <div class="card daybox">
@@ -109,6 +110,11 @@
           <input id="q" placeholder="Ex.: Coliseu, Roma" aria-label="Buscar atração, cidade ou endereço">
           <button class="btn primary" type="submit">Buscar</button>
         </form>
+        <button type="button" id="pickMapPoint" class="btn map-pick-btn">
+          <span class="material-symbols-outlined" aria-hidden="true">add_location_alt</span>
+          Escolher ponto no mapa
+        </button>
+        <p id="mapPickHint" class="map-pick-hint hidden" role="status">Clique no mapa para escolher a localização. Pressione Esc para cancelar.</p>
       </section>
       <ul id="results" aria-live="polite" aria-label="Resultados da busca"></ul>
       <details class="card ideas" open>
@@ -199,6 +205,30 @@
       <button type="button" id="offView" class="btn off-opt"><span class="material-symbols-outlined" aria-hidden="true">visibility</span><b>Apenas visualizar</b><small>Os botões de edição ficam ocultos e nada é alterado.</small></button>
     </div>
     <p class="off-note">Busca de lugares, fotos novas e cálculo de trajetos precisam de internet.</p>
+  </dialog>
+  <dialog id="pointDlg" class="point-dlg" aria-labelledby="pointTitle">
+    <div class="point-icon"><span class="material-symbols-outlined" aria-hidden="true">add_location_alt</span></div>
+    <h2 id="pointTitle">Nomeie este ponto</h2>
+    <p id="pointMessage"></p>
+    <label id="pointField" class="field"><span class="label">Nome da parada</span>
+      <input id="pointInput" maxlength="80" placeholder="Ex.: Museu Nacional">
+    </label>
+    <p id="pointError" class="dlg-error hidden" role="alert"></p>
+    <div class="dlg-actions">
+      <span class="spacer"></span>
+      <button type="button" id="pointCancel" class="btn">Cancelar</button>
+      <button type="button" id="pointConfirm" class="btn primary">Adicionar ponto</button>
+    </div>
+  </dialog>
+  <dialog id="confirmDlg" class="confirm-dlg" aria-labelledby="confirmTitle">
+    <div class="confirm-icon"><span id="confirmIcon" class="material-symbols-outlined" aria-hidden="true">warning</span></div>
+    <h2 id="confirmTitle">Confirmar ação</h2>
+    <p id="confirmMessage"></p>
+    <div class="dlg-actions">
+      <span class="spacer"></span>
+      <button type="button" id="confirmCancel" class="btn">Cancelar</button>
+      <button type="button" id="confirmAccept" class="btn danger">Confirmar</button>
+    </div>
   </dialog>
   <div id="toast" class="hidden" role="status"></div>
 
