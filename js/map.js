@@ -97,12 +97,17 @@ function initMap() {
       container.querySelectorAll('.map-style-option').forEach((button) => {
         button.addEventListener('click', () => {
           const id = button.dataset.style;
+          const center = map.getCenter();
+          const zoom = map.getZoom();
           Object.values(byId).forEach((layerItem) => map.removeLayer(layerItem));
           byId[id].addTo(map);
           localStorage.setItem('mundo-afora.map', id);
           activeMapStyle = id;
           update(id);
-          if (cur()) drawMap(cur());
+          // A renderização dos marcadores não deve recalcular o enquadramento
+          // quando a troca de estilo precisa preservar a posição atual.
+          if (cur()) drawMap(cur(), { preserveViewport: true });
+          map.setView(center, zoom, { animate: false });
           container.classList.remove('open');
           toggle.setAttribute('aria-expanded', 'false');
         });
@@ -145,7 +150,7 @@ function tipHtml(s, day) {
   </div>`;
 }
 
-function drawMap(t) {
+function drawMap(t, options = {}) {
   layer.clearLayers();
   const pts = [];
   const days = overview ? t.days : [t.days[dayIdx]];
@@ -175,7 +180,7 @@ function drawMap(t) {
       }
     });
   });
-  if (pts.length) map.fitBounds(pts, { padding: [50, 50], maxZoom: 15 });
+  if (pts.length && !options.preserveViewport) map.fitBounds(pts, { padding: [50, 50], maxZoom: 15 });
 }
 
 // clicar num ponto do mapa leva ao cartão da parada

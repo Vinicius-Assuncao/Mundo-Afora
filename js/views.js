@@ -261,7 +261,7 @@ function renderStops(t) {
             <button type="button" class="stop-photo ph" data-act="icon" data-id="${s.id}" aria-label="Escolher emoji">${esc(s.icon || '📍')}<small>${iconEdit === s.id ? 'escolha abaixo' : 'trocar emoji'}</small></button>
             ${s.originalPhoto ? `<button type="button" class="stop-photo-action" data-act="restorePhoto" data-id="${s.id}" aria-label="Voltar à imagem">Voltar à imagem</button>` : ''}
           </div>`}
-      ${iconEdit === s.id ? `<div class="icon-grid">${ICON_EMOJIS.map((e) => `<button type="button" data-act="pickIcon" data-id="${s.id}" data-v="${e}" class="${(s.icon || '📍') === e ? 'on' : ''}" aria-label="${e}">${e}</button>`).join('')}</div>` : ''}
+      ${iconEdit === s.id ? `<div class="icon-picker"><div class="icon-grid">${ICON_EMOJIS.map((e) => `<button type="button" data-act="pickIcon" data-id="${s.id}" data-v="${esc(e)}" class="${(s.icon || '📍') === e ? 'on' : ''}" aria-label="${esc(e)}">${esc(e)}</button>`).join('')}</div><div class="custom-emoji-row stop-custom-emoji"><input type="text" data-custom-stop-emoji="${s.id}" placeholder="Ou cole um emoji…" aria-label="Emoji personalizado para ${esc(s.name)}"><button type="button" class="btn sm" data-act="pickCustomIcon" data-id="${s.id}">Usar emoji</button></div></div>` : ''}
       <div class="stop-body">
         <div class="sh">
           <span class="num">${i + 1}</span>

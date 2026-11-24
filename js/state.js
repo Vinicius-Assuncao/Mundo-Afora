@@ -1,8 +1,8 @@
 const KEY = 'mundo-afora.v1';
 const $ = (s) => document.querySelector(s);
 
-const EMOJIS = ['🌍','✈️','🏖️','🏔️','🏙️','🗺️','🚗','🚆','⛵','🏕️','🍷','🎒','📸','🌅','🌴','🏛️','🎡','🌋','🐋','🛶','🍜','🌸','❄️','🌵','🎉','💼','⚽','🎨'];
-const FLAGS = [
+const EMOJIS = ['🌍','✈️','🏖️','🏔️','🏙️','🗺️','🚗','🚆','🚢','🏕️','🍽️','🎒','📸','🌅','🏝️','🏛️','🎢','🌋','🐘','🚴','🌸','❄️','🌵','🎉','🎓','⚽','🎭','🧘'];
+let FLAGS = [
   ['br','Brasil'],['pt','Portugal'],['es','Espanha'],['fr','França'],['it','Itália'],['de','Alemanha'],
   ['gb','Reino Unido'],['ie','Irlanda'],['nl','Países Baixos'],['ch','Suíça'],['at','Áustria'],['gr','Grécia'],
   ['no','Noruega'],['se','Suécia'],['is','Islândia'],['tr','Turquia'],['ru','Rússia'],['us','Estados Unidos'],
@@ -10,6 +10,38 @@ const FLAGS = [
   ['jp','Japão'],['kr','Coreia do Sul'],['cn','China'],['in','Índia'],['th','Tailândia'],['ae','Emirados Árabes'],
   ['ma','Marrocos'],['eg','Egito'],['za','África do Sul'],['au','Austrália'],['nz','Nova Zelândia'],
 ];
+const FLAGS_CACHE_KEY = 'mundo-afora.flags.v1';
+let flagsPromise = null;
+async function loadFlags() {
+  if (flagsPromise) return flagsPromise;
+  flagsPromise = (async () => {
+    try {
+      const cached = JSON.parse(localStorage.getItem(FLAGS_CACHE_KEY) || 'null');
+      if (Array.isArray(cached) && cached.length > 100) FLAGS = cached;
+    } catch {}
+    try {
+      const response = await fetch('https://flagcdn.com/pt/codes.json');
+      if (!response.ok) throw new Error(`FlagCDN HTTP ${response.status}`);
+      const data = await response.json();
+      const entries = Object.entries(data).filter(([code, name]) => /^[a-z]{2}$/.test(code) && typeof name === 'string')
+        .map(([code, name]) => [code, name]).sort((a, b) => a[1].localeCompare(b[1], 'pt-BR'));
+      if (entries.length > 100) { FLAGS = entries; localStorage.setItem(FLAGS_CACHE_KEY, JSON.stringify(entries)); }
+    } catch (error) {
+      flagsPromise = null;
+      console.warn('[Mundo Afora] Não foi possível atualizar a lista de países:', error);
+    }
+    return FLAGS;
+  })();
+  return flagsPromise;
+}
+const validCustomEmoji = (value) => {
+  const text = String(value || '').trim();
+  if (!text || /\p{Regional_Indicator}/u.test(text)) return false;
+  const parts = typeof Intl.Segmenter === 'function'
+    ? [...new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(text)].map((part) => part.segment)
+    : Array.from(text);
+  return parts.length === 1 && (/^[0-9#*]\uFE0F?\u20E3$/u.test(text) || /[\p{Extended_Pictographic}\p{Emoji_Presentation}]/u.test(text));
+};
 const COLORS = ['#2f5d8a','#4a6fa5','#1f5f6b','#3d7a4f','#6b8e4e','#8b5e3c','#a0522d','#9a6b1f','#5c4033','#1a1a1a'];
 const isHexColor = (value) => /^#[0-9a-f]{6}$/i.test(String(value || ''));
 function tripColor(trip) {
@@ -34,7 +66,7 @@ const MODES = {
   car:  { profile: 'driving-car', label: 'Carro' },
 };
 
-const ICON_EMOJIS = ['📍','🏛️','⛪','🕌','🏰','🗿','⛲','🌉','🚉','🎭','🖼️','🍕','🍝','☕','🍦','🛍️','🌳','🌊','🏟️','🌃','🏞️','🎡','🍷','🎶','🛕','🌅','🏖️','🚠','🕰️'];
+const ICON_EMOJIS = ['📍','🏛️','⛪','🏰','🗿','⛲','🌉','🚉','🎭','🖼️','🍽️','☕','🍦','🛍️','🌳','🏖️','🏟️','🌃','🏞️','🎡','🍷','🎶','🌅','🚠','🕰️','🗼','🧭','🎨','🛶'];
 let iconEdit = null;
 let stopRenameId = null;
 let db = JSON.parse(localStorage.getItem(KEY) || 'null') || { trips: [], currentId: null };

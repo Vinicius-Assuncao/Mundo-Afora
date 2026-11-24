@@ -383,3 +383,6 @@ details.info small { color: var(--muted); display: block; margin-top: 6px; }
 #ideas li > span { color: #294b63; font-size: .86rem; }
 #ideas select { flex: 0 1 42%; max-width: 42%; }
 
+
+.icon-picker { background: #faf8f3; border-bottom: 1px solid var(--line); }
+.icon-picker .icon-grid { border-bottom: 0; }

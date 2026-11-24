@@ -104,3 +104,10 @@ dialog input { border-color: #dde5eb; }
 .confirm-dlg > p { color: var(--muted); line-height: 1.55; margin: -6px 0 16px; }
 #map.map-picking { cursor: crosshair !important; }
 #map.map-picking .leaflet-interactive { cursor: crosshair !important; }
+
+.custom-emoji-row { display: flex; gap: 8px; align-items: center; margin-top: 9px; }
+.custom-emoji-row input { flex: 1; min-width: 0; }
+.custom-emoji-row .btn { flex: 0 0 auto; white-space: nowrap; }
+.icon-picker { grid-column: 1 / -1; min-width: 0; }
+.stop-custom-emoji { padding: 0 10px 10px; margin-top: 0; }
+@media (max-width: 420px) { .custom-emoji-row { align-items: stretch; } .custom-emoji-row .btn { padding-inline: 9px; } }

@@ -2,15 +2,16 @@
 function renderPicker() {
   document.querySelectorAll('[data-pt]').forEach((b) => b.classList.toggle('on', b.dataset.pt === pickerTab));
   $('#flagFilter').classList.toggle('hidden', pickerTab !== 'flag');
+  $('#customTripEmoji').value = picked.startsWith('flag:') ? '' : picked;
   $('#pickPreview').innerHTML = visual(picked, 'ico');
   const grid = $('#emojiGrid');
   if (pickerTab === 'emoji') {
     grid.className = 'picker-grid emo';
     grid.innerHTML = EMOJIS.map((e) =>
-      `<button type="button" class="${e === picked ? 'on' : ''}" data-e="${e}" aria-label="${e}">${e}</button>`).join('');
+      `<button type="button" class="${e === picked ? 'on' : ''}" data-e="${esc(e)}" aria-label="${esc(e)}">${esc(e)}</button>`).join('');
   } else {
-    const q = $('#flagFilter').value.trim().toLowerCase();
-    const list = FLAGS.filter(([, n]) => !q || n.toLowerCase().includes(q));
+    const q = normalizeCountryQuery($('#flagFilter').value);
+    const list = FLAGS.filter(([, n]) => !q || normalizeCountryQuery(n).includes(q));
     grid.className = 'picker-grid';
     grid.innerHTML = list.map(([code, name]) => {
       const v = 'flag:' + code;
@@ -19,6 +20,10 @@ function renderPicker() {
       </button>`;
     }).join('') || '<p class="empty-line" style="grid-column:1/-1">Nenhum país encontrado.</p>';
   }
+}
+
+function normalizeCountryQuery(value) {
+  return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR').trim();
 }
 function updateDlgInfo() {
   const start = $('#tStart').value;
@@ -54,6 +59,7 @@ function openDialog(trip) {
   pickerTab = picked.startsWith('flag:') ? 'flag' : 'emoji';
   $('#flagFilter').value = '';
   renderPicker();
+  if (pickerTab === 'flag') loadFlags().then(() => { if ($('#tripDlg').open && pickerTab === 'flag') renderPicker(); });
   updateDlgInfo();
   $('#tDelete').classList.toggle('hidden', !trip);
   $('#tripDlg').showModal();

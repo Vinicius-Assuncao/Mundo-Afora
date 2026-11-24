@@ -21,6 +21,14 @@ self.addEventListener('fetch', (e) => {
   if (url.origin === self.location.origin && ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)) {
     e.respondWith(fetch(req)); return;
   }
+  const flagCatalog = url.hostname === 'flagcdn.com' && url.pathname === '/pt/codes.json';
+  if (flagCatalog) {
+    e.respondWith(caches.match(req).then((hit) => fetch(req).then((res) => {
+      if (res.ok) caches.open(CACHE).then((cache) => cache.put(req, res.clone()));
+      return res;
+    }).catch(() => hit || Promise.reject(new Error('Catálogo de bandeiras indisponível')))));
+    return;
+  }
   const cacheFirst = url.hostname.endsWith('tile.openstreetmap.org')
     || url.hostname.endsWith('arcgisonline.com') || url.hostname.endsWith('cartocdn.com')
     || url.hostname === 'upload.wikimedia.org' || url.hostname === 'flagcdn.com'

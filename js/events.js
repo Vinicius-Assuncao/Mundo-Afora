@@ -54,8 +54,16 @@ $('#tripCards').onkeydown = (e) => {
   }
 };
 
-document.querySelectorAll('[data-pt]').forEach((b) => b.onclick = () => { pickerTab = b.dataset.pt; renderPicker(); });
+document.querySelectorAll('[data-pt]').forEach((b) => b.onclick = () => { pickerTab = b.dataset.pt; renderPicker(); if (pickerTab === 'flag') loadFlags().then(renderPicker); });
 $('#flagFilter').oninput = renderPicker;
+$('#applyTripEmoji').onclick = () => {
+  const value = $('#customTripEmoji').value.trim();
+  if (!validCustomEmoji(value)) return toast('Digite ou cole apenas um emoji válido (sem bandeiras).');
+  picked = value; pickerTab = 'emoji'; renderPicker();
+};
+$('#customTripEmoji').onkeydown = (event) => { if (event.key === 'Enter') { event.preventDefault(); $('#applyTripEmoji').click(); } };
+loadFlags();
+window.addEventListener('online', () => loadFlags().then(() => { if ($('#tripDlg').open && pickerTab === 'flag') renderPicker(); }));
 $('#emojiGrid').onclick = (e) => {
   const b = e.target.closest('[data-e]'); if (!b) return;
   picked = b.dataset.e; renderPicker();
@@ -214,10 +222,17 @@ $('#stops').onclick = (e) => {
     return;
   }
   if (b.dataset.act === 'icon') { iconEdit = iconEdit === b.dataset.id ? null : b.dataset.id; return renderTrip(); }
-  if (b.dataset.act === 'pickIcon') {
-    if (d.stops[idx].photo) d.stops[idx].originalPhoto = d.stops[idx].photo;
-    d.stops[idx].icon = b.dataset.v;
-    d.stops[idx].photo = '';
+  if (b.dataset.act === 'pickIcon' || b.dataset.act === 'pickCustomIcon') {
+    const stop = d.stops[idx];
+    let value = b.dataset.v || '';
+    if (b.dataset.act === 'pickCustomIcon') {
+      const input = [...$('#stops').querySelectorAll('[data-custom-stop-emoji]')].find((el) => el.dataset.customStopEmoji === stop.id);
+      value = input?.value.trim() || '';
+      if (!validCustomEmoji(value)) return toast('Digite ou cole apenas um emoji válido (sem bandeiras).');
+    }
+    if (stop.photo) stop.originalPhoto = stop.photo;
+    stop.icon = value;
+    stop.photo = '';
     iconEdit = null;
     save();
     return renderTrip();
