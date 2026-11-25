@@ -12,6 +12,16 @@ const MAP_STYLES = {
 let activeMapStyle = 'osm';
 let mapPickMode = false;
 let mapPickMarker = null;
+let styleViewportContext = null;
+
+function mapContextKey(trip) {
+  const days = overview ? trip.days : [trip.days[dayIdx]].filter(Boolean);
+  return JSON.stringify([
+    trip.id,
+    overview ? 'overview' : dayIdx,
+    days.map((day) => day.stops.map((stop) => [stop.id, stop.lat, stop.lon])),
+  ]);
+}
 
 function isLocalHosting() {
   const hostname = location.hostname.toLowerCase();
@@ -99,6 +109,8 @@ function initMap() {
           const id = button.dataset.style;
           const center = map.getCenter();
           const zoom = map.getZoom();
+          const trip = cur();
+          styleViewportContext = trip ? mapContextKey(trip) : null;
           Object.values(byId).forEach((layerItem) => map.removeLayer(layerItem));
           byId[id].addTo(map);
           localStorage.setItem('mundo-afora.map', id);
@@ -106,7 +118,7 @@ function initMap() {
           update(id);
           // A renderização dos marcadores não deve recalcular o enquadramento
           // quando a troca de estilo precisa preservar a posição atual.
-          if (cur()) drawMap(cur(), { preserveViewport: true });
+          if (trip) drawMap(trip, { preserveViewport: true });
           map.setView(center, zoom, { animate: false });
           container.classList.remove('open');
           toggle.setAttribute('aria-expanded', 'false');
@@ -154,6 +166,8 @@ function drawMap(t, options = {}) {
   layer.clearLayers();
   const pts = [];
   const days = overview ? t.days : [t.days[dayIdx]];
+  const preserveStyleViewport = styleViewportContext === mapContextKey(t);
+  if (styleViewportContext && !preserveStyleViewport) styleViewportContext = null;
   days.filter(Boolean).forEach((d, di) => {
     const dayRealIndex = overview ? t.days.indexOf(d) : dayIdx;
     d.stops.forEach((s, i) => {
@@ -180,7 +194,9 @@ function drawMap(t, options = {}) {
       }
     });
   });
-  if (pts.length && !options.preserveViewport) map.fitBounds(pts, { padding: [50, 50], maxZoom: 15 });
+  if (pts.length && !options.preserveViewport && !preserveStyleViewport) {
+    map.fitBounds(pts, { padding: [50, 50], maxZoom: 15 });
+  }
 }
 
 // clicar num ponto do mapa leva ao cartão da parada
