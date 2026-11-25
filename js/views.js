@@ -227,6 +227,9 @@ function renderDayHead(t) {
   $('#dayHead').innerHTML = `
     <div class="dh">
       <input id="dayName" value="${esc(d.name)}" aria-label="Nome do dia">
+      <button type="button" class="btn sm ghost recalculate-route" data-act="recalculateRoute" aria-label="Recalcular rota deste dia" title="Recalcular os trajetos deste dia">
+        <span class="material-symbols-outlined" aria-hidden="true">alt_route</span><span>Recalcular rota</span>
+      </button>
       <button class="btn sm ghost danger" data-act="delDay">Excluir dia</button>
     </div>
     <div class="swatches" style="margin-top:10px">

@@ -112,6 +112,10 @@ $('#dayHead').onclick = (e) => {
   const t = cur(), d = t.days[dayIdx];
   const sw = e.target.closest('[data-color]');
   if (sw) { d.color = sw.dataset.color; save(); return renderTrip(); }
+  if (e.target.closest('[data-act="recalculateRoute"]')) {
+    if (d.stops.length < 2) return toast('Adicione ao menos duas paradas para recalcular a rota.');
+    return withBusy(() => routeDay(d), 'Trajetos recalculados.');
+  }
   if (e.target.closest('[data-act="delDay"]')) {
     if (t.days.length === 1) return toast('A viagem precisa ter ao menos um dia.');
     askConfirm({
