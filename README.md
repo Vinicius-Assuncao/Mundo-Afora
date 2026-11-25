@@ -14,7 +14,7 @@ Tudo funciona no navegador e pode ser instalado no celular como aplicativo. Use 
 - 🌍 **Ícones personalizados** para cada viagem: emojis ou bandeiras de países
 - 🗓️ **Período da viagem** definido por datas, com criação automática de um dia para cada data
 - 🧭 **Visão geral** como tela inicial de cada viagem, com totais, cards dos dias e prévia das paradas
-- 📍 **Paradas com foto e descrição** vindas da Wikipédia, quando disponíveis
+- 📍 **Paradas com foto e descrição** vindas da Wikipédia e Wiki Commons, quando disponíveis; busque e alterne entre até duas fotos, com a escolha salva no roteiro
 - 🕒 **Horário e tempo de permanência** para cada parada, com aviso quando o horário não comporta o deslocamento
 - 🚶 **Trajetos a pé, de bicicleta ou de carro**, com tempo e distância entre paradas
 - 🔁 **Recálculo de trajetos** por dia ou da viagem inteira, para economizar requisições

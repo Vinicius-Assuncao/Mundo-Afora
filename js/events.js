@@ -199,11 +199,67 @@ $('#stops').addEventListener('keydown', (e) => {
   }
 });
 
+async function searchAlternativeStopPhoto(stop, button) {
+  if (typeof Offline !== 'undefined' && Offline.isViewOnly()) return toast('A visualização offline não permite alterar fotos.');
+  const choices = Array.isArray(stop.photoChoices) && stop.photoChoices.length
+    ? stop.photoChoices.slice(0, 2)
+    : [{ ...(stop.photoAttribution || {}), url: stop.photo }];
+  button.disabled = true;
+  let nextPhoto;
+  try {
+    nextPhoto = await alternativeStopPhoto(stop);
+  } catch (error) {
+    return toast(error.message || 'Não foi possível buscar outra foto.');
+  } finally {
+    if (button.isConnected) button.disabled = false;
+  }
+
+  if (!nextPhoto) {
+    if (stop.photoSearchDone) return;
+    stop.photoSearchDone = true;
+    save();
+    renderTrip();
+    return toast('Nenhuma outra foto foi encontrada para esta atração.');
+  }
+
+  choices.push(nextPhoto);
+  stop.photoChoices = choices;
+  stop.photoIndex = Math.max(0, choices.findIndex((photo) => photo.url === stop.photo));
+  stop.photoSearchDone = true;
+  save();
+  renderTrip();
+  toast('Outra foto encontrada. Use as setas para alternar.', 'ok');
+}
+
+function changeStopPhoto(stop, direction) {
+  if (typeof Offline !== 'undefined' && Offline.isViewOnly()) return toast('A visualização offline não permite alterar fotos.');
+  const choices = (stop.photoChoices || []).slice(0, 2);
+  let index = Number.isInteger(stop.photoIndex) ? stop.photoIndex : choices.findIndex((photo) => photo.url === stop.photo);
+  if (!choices[index] || choices[index].url !== stop.photo) index = choices.findIndex((photo) => photo.url === stop.photo);
+  if (index < 0) index = 0;
+  if (direction < 0 && index > 0) index -= 1;
+  else if (direction > 0 && index === 0 && choices.length > 1) index = 1;
+  else return;
+
+  const selected = choices[index];
+  if (!selected?.url) return toast('Não foi possível carregar esta foto.');
+  stop.photoIndex = index;
+  stop.photo = selected.url;
+  stop.photoAttribution = selected;
+  stop.photoCredit = selected.credit || '';
+  stop.icon = '';
+  save();
+  renderTrip();
+}
+
 $('#stops').onclick = (e) => {
   const b = e.target.closest('[data-act]'); if (!b) return;
   const d = cur().days[dayIdx];
   const idx = d.stops.findIndex((s) => s.id === b.dataset.id);
   if (idx < 0) return;
+  if (b.dataset.act === 'searchPhoto') return searchAlternativeStopPhoto(d.stops[idx], b);
+  if (b.dataset.act === 'previousPhoto') return changeStopPhoto(d.stops[idx], -1);
+  if (b.dataset.act === 'nextPhoto') return changeStopPhoto(d.stops[idx], 1);
   if (b.dataset.act === 'saveRename') {
     const input = [...$('#stops').querySelectorAll('[data-stop-name]')]
       .find((el) => el.dataset.id === b.dataset.id);
@@ -244,7 +300,16 @@ $('#stops').onclick = (e) => {
   if (b.dataset.act === 'restorePhoto') {
     const stop = d.stops[idx];
     if (stop.originalPhoto) {
-      stop.photo = stop.originalPhoto;
+      const photoIndex = (stop.photoChoices || []).findIndex((photo) => photo.url === stop.originalPhoto);
+      if (photoIndex >= 0) {
+        stop.photoIndex = photoIndex;
+        stop.photo = stop.photoChoices[photoIndex].url;
+        stop.photoAttribution = stop.photoChoices[photoIndex];
+        stop.photoCredit = stop.photoAttribution.credit || '';
+      } else {
+        stop.photo = stop.originalPhoto;
+        stop.photoIndex = 0;
+      }
       stop.icon = '';
       save();
       return renderTrip();

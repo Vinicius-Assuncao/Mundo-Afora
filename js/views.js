@@ -256,6 +256,20 @@ function renderStops(t) {
       ${s.photo
         ? `<div class="stop-photo-wrap">
             <img class="stop-photo" src="${esc(s.photo)}" alt="${esc(s.name)}" loading="lazy">
+            ${typeof Offline === 'undefined' || !Offline.isViewOnly()
+              ? Array.isArray(s.photoChoices) && s.photoChoices.length > 1
+                ? `<div class="stop-photo-nav" aria-label="Alternar foto">
+              <button type="button" class="stop-photo-nav-button" data-act="previousPhoto" data-id="${s.id}" aria-label="Foto anterior" title="Foto anterior" ${s.photoIndex ? '' : 'disabled'}>
+                <span class="material-symbols-outlined" aria-hidden="true">chevron_left</span>
+              </button>
+              <button type="button" class="stop-photo-nav-button" data-act="nextPhoto" data-id="${s.id}" aria-label="Próxima foto" title="Próxima foto" ${s.photoIndex === 1 ? 'disabled' : ''}>
+                <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+              </button>
+            </div>`
+                : !s.photoSearchDone
+                  ? `<button type="button" class="stop-photo-search" data-act="searchPhoto" data-id="${s.id}">Buscar outra foto</button>`
+                  : ''
+              : ''}
             <button type="button" class="stop-photo-action" data-act="icon" data-id="${s.id}" aria-label="Trocar imagem por emoji">
               ${iconEdit === s.id ? 'Escolha um emoji abaixo' : 'Usar emoji'}
             </button>

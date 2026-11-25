@@ -1,4 +1,4 @@
-const CACHE = 'mundo-afora-v16';
+const CACHE = 'mundo-afora-v17';
 const SHELL = ['./', 'index.html', 'config.js', 'manifest.json', 'icon.png',
   'css/base.css', 'css/home.css', 'css/itinerary.css', 'css/map.css', 'css/dialogs.css', 'css/responsive.css',
   'js/state.js', 'js/services.js', 'js/routing.js', 'js/views.js', 'js/map.js', 'js/dialogs.js', 'js/cloud.js', 'js/events.js', 'js/wikimedia-ui.js', 'css/cloud.css',

@@ -315,23 +315,32 @@ function commonsCandidates(data) {
   return Object.values(data.query?.pages || {}).map((page) => ({ page, info: page.imageinfo?.[0] }))
     .filter(({ info }) => validCommonsImage(info));
 }
-async function imageFromP18(entity) {
+function excludedCommonsImage(title, info, excludedPhotos) {
+  const url = info?.thumburl || info?.url || '';
+  return excludedPhotos.some((photo) => photo && (
+    (photo.title && photo.title.toLocaleLowerCase() === String(title || '').toLocaleLowerCase())
+    || (photo.url && photo.url === url)
+  ));
+}
+async function imageFromP18(entity, excludedPhotos) {
   const file = entity?.claims?.P18?.[0]?.mainsnak?.datavalue?.value;
   if (!file) return null;
-  return commonsImageByTitle('File:' + file);
+  const result = await commonsImageByTitle('File:' + file);
+  return result && !excludedCommonsImage(result.title, result.info, excludedPhotos) ? result : null;
 }
-async function imageByDepicts(entity) {
+async function imageByDepicts(entity, excludedPhotos) {
   if (!entity?.id) return null;
   // A imagem precisa declarar depicts (P180) para esta entidade.
   const data = await wikimediaFetch(commonsApi({
     action: 'query', generator: 'search', gsrsearch: `haswbstatement:P180=${entity.id}`,
     gsrnamespace: '6', gsrlimit: '18', ...IMG_PARAMS,
   }));
-  const first = commonsCandidates(data)[0];
-  return first ? { info: first.info, title: first.page.title } : null;
+  const candidate = commonsCandidates(data)
+    .find(({ page, info }) => !excludedCommonsImage(page.title, info, excludedPhotos));
+  return candidate ? { info: candidate.info, title: candidate.page.title } : null;
 }
 // Categoria do item (P373): só aceita arquivo perto do ponto ou com nome parecido.
-async function imageFromCategory(entity, stop) {
+async function imageFromCategory(entity, stop, excludedPhotos) {
   const category = entity?.claims?.P373?.[0]?.mainsnak?.datavalue?.value;
   if (!category) return null;
   const data = await wikimediaFetch(commonsApi({
@@ -339,6 +348,7 @@ async function imageFromCategory(entity, stop) {
     gcmtype: 'file', gcmlimit: '18', ...IMG_PARAMS,
   }));
   for (const { page, info } of commonsCandidates(data)) {
+    if (excludedCommonsImage(page.title, info, excludedPhotos)) continue;
     if (!stop.wikiName) return { info, title: page.title };   // identificado só por ID: confia na categoria
     const c = fileCoords(page, info);
     if (c && hasPoint(stop)) {
@@ -350,22 +360,23 @@ async function imageFromCategory(entity, stop) {
   return null;
 }
 // Fallback Commons 1: fotos geolocalizadas num raio curto cujo título/descrição lembra o nome.
-async function commonsGeoPhoto(stop) {
+async function commonsGeoPhoto(stop, excludedPhotos) {
   const data = await wikimediaFetch(commonsApi({
     action: 'query', generator: 'geosearch', ggscoord: `${stop.lat}|${stop.lon}`,
     ggsradius: String(COMMONS_GEO_RADIUS_M), ggslimit: '30', ggsnamespace: '6', ...IMG_PARAMS,
   }));
   const best = commonsCandidates(data)
+    .filter(({ page, info }) => !excludedCommonsImage(page.title, info, excludedPhotos))
     .map((x) => ({ ...x, score: nameSimilarity(stop.wikiName, fileText(x.page, x.info)) }))
     .filter((x) => x.score >= 0.5).sort((a, b) => b.score - a.score)[0];
   return best ? { info: best.info, title: best.page.title } : null;
 }
 // Fallback Commons 2: busca por texto, mas só aceita foto COM coordenada perto do ponto.
-async function commonsTextPhoto(stop) {
+async function commonsTextPhoto(stop, excludedPhotos) {
   const data = await wikimediaFetch(commonsApi({
     action: 'query', generator: 'search', gsrsearch: stop.wikiName, gsrnamespace: '6', gsrlimit: '20', ...IMG_PARAMS,
   }));
-  const best = commonsCandidates(data).map((x) => {
+  const best = commonsCandidates(data).filter(({ page, info }) => !excludedCommonsImage(page.title, info, excludedPhotos)).map((x) => {
     const c = fileCoords(x.page, x.info);
     const km = c ? haversineKm(stop.lat, stop.lon, c.lat, c.lon) : null;
     return { ...x, km, score: nameSimilarity(stop.wikiName, fileText(x.page, x.info)) };
@@ -373,12 +384,19 @@ async function commonsTextPhoto(stop) {
     .sort((a, b) => (b.score - a.score) || (a.km - b.km))[0];
   return best ? { info: best.info, title: best.page.title } : null;
 }
-async function stopPhoto(entity, stop) {
-  const cacheKey = `photo3:${entity?.id || ''}:${normalizeWikiText(stop.wikiName || '')}:${hasPoint(stop) ? Number(stop.lat).toFixed(3) + ':' + Number(stop.lon).toFixed(3) : ''}`;
+async function stopPhoto(entity, stop, excludedPhotos = []) {
+  const stopKey = `${entity?.id || ''}:${normalizeWikiText(stop.wikiName || '')}:${hasPoint(stop) ? Number(stop.lat).toFixed(3) + ':' + Number(stop.lon).toFixed(3) : ''}`;
+  const cacheKey = excludedPhotos.length
+    ? `photo4alt:${stopKey}:${excludedPhotos.map((photo) => photo?.title || photo?.url || '').join('|')}`
+    : `photo3:${stopKey}`;
   if (hasWikiCache(cacheKey)) return getWikiCache(cacheKey);
   let result = null;
-  if (entity) result = (await imageFromP18(entity)) || (await imageByDepicts(entity)) || (await imageFromCategory(entity, stop));
-  if (!result && stop.wikiName && hasPoint(stop)) result = (await commonsGeoPhoto(stop)) || (await commonsTextPhoto(stop));
+  if (entity) result = (await imageFromP18(entity, excludedPhotos))
+    || (await imageByDepicts(entity, excludedPhotos))
+    || (await imageFromCategory(entity, stop, excludedPhotos));
+  if (!result && stop.wikiName && hasPoint(stop)) {
+    result = (await commonsGeoPhoto(stop, excludedPhotos)) || (await commonsTextPhoto(stop, excludedPhotos));
+  }
   if (!result) {
     writeWikiCache(cacheKey, null, true);
     return null;
@@ -386,6 +404,15 @@ async function stopPhoto(entity, stop) {
   const photo = { url: result.info.thumburl || result.info.url, title: result.title, ...attributionFromImageInfo(result.info) };
   writeWikiCache(cacheKey, photo);
   return photo;
+}
+async function alternativeStopPhoto(stop) {
+  const existing = Array.isArray(stop.photoChoices) && stop.photoChoices.length
+    ? stop.photoChoices
+    : [{ ...(stop.photoAttribution || {}), url: stop.photo }];
+  const firstPhoto = existing[0];
+  if (!firstPhoto?.url) return null;
+  const entity = await findWikidataEntity(stop);
+  return stopPhoto(entity, stop, [firstPhoto]);
 }
 
 // ---------- Wikipédia: resumo ligado ao item do Wikidata ----------
@@ -444,7 +471,12 @@ async function enrich(stop) {
     if (w) {
       if (w.desc) stop.desc = w.desc;
       if (w.url) stop.url = w.url;
-      if (!stop.icon && w.photo) stop.photo = w.photo;
+      if (!stop.icon && w.photo) {
+        stop.photo = w.photo;
+        stop.originalPhoto = w.photo;
+        stop.photoChoices = [w.photoAttribution];
+        stop.photoIndex = 0;
+      }
       if (w.wikidataId) stop.wikidataId = w.wikidataId;
       if (w.photoCredit) stop.photoCredit = w.photoCredit;
       if (w.photoAttribution) stop.photoAttribution = w.photoAttribution;
