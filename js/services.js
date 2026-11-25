@@ -2,7 +2,7 @@
 async function ors(mode, a, b) {
   if (!hasKey()) throw new Error('Configure a chave em config.js para calcular trajetos.');
   if (!navigator.onLine) throw new Error('Sem internet: o trajeto será calculado quando você estiver online.');
-  const r = await fetch(`https://api.openrouteservice.org/v2/directions/${MODES[mode].profile}/geojson`, {
+  const r = await fetch(`https://api.heigit.org/openrouteservice/v2/directions/${MODES[mode].profile}/geojson`, {
     method: 'POST',
     headers: { Authorization: CONFIG.ORS_KEY, 'Content-Type': 'application/json' },
     body: JSON.stringify({ coordinates: [[a.lon, a.lat], [b.lon, b.lat]] }),
