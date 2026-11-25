@@ -188,7 +188,7 @@ function saveStopRename(stopId, value) {
 }
 
 $('#stops').addEventListener('keydown', (e) => {
-  if (!e.target.dataset?.stopName) return;
+  if (!e.target.matches?.('[data-stop-name]')) return;
   if (e.key === 'Enter') {
     e.preventDefault();
     saveStopRename(e.target.dataset.id, e.target.value);
@@ -271,7 +271,7 @@ $('#stops').onclick = (e) => {
     const t = cur();
     const [s] = d.stops.splice(idx, 1);
     fixLegs(d);
-    t.ideas.push({ id: s.id, name: s.name, wikiName: s.wikiName ?? s.name, lat: s.lat, lon: s.lon });
+    t.ideas.push({ id: s.id, name: s.name, wikiName: s.wikiName ?? s.name, wikidataId: s.wikidataId || '', wikipedia: s.wikipedia || '', lat: s.lat, lon: s.lon });
     toast('Parada movida para a lista de ideias.', 'ok');
     return reroute(d);
   }
@@ -292,8 +292,13 @@ Sortable.create($('#stops'), {
 
 $('#pickMapPoint').onclick = () => {
   if (typeof Offline !== 'undefined' && Offline.isViewOnly()) return toast('A visualização offline não permite editar paradas.');
+  if ($('#pickMapPoint').classList.contains('active')) {
+    cancelMapPointSelection();
+    return;
+  }
   setTripLayout('split');
   startMapPointSelection();
+  setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 300);
   toast('Agora clique na localização desejada no mapa.');
 };
 
@@ -382,8 +387,7 @@ window.handleMapPointSelection = async (lat, lon) => {
         confirmText: 'Adicionar ponto',
       });
       if (!custom) { toast('Ponto não adicionado.'); return; }
-      place.name = custom;
-      place.wikiName = '';
+      place.name = custom;   // nome personalizado é só visual: wikiName (nome reconhecido) continua valendo para as consultas
     } else if (choice !== '__recognized__') {
       toast('Ponto não adicionado.');
       return;
@@ -393,13 +397,13 @@ window.handleMapPointSelection = async (lat, lon) => {
   if (!trip || overview) { toast('Abra um dia do roteiro antes de adicionar uma parada.'); return; }
   const day = trip.days[dayIdx];
   const stop = newStop(place);
-  if (!place.wikiName) stop.wikiDone = true;
+  if (!place.wikiName && !place.wikidataId && !place.wikipedia) stop.wikiDone = true;
   if (place.wikidataId) stop.wikidataId = place.wikidataId;
   day.stops.push(stop);
   fixLegs(day);
   save(); renderTrip();
   toast(`“${stop.name}” adicionado a ${day.name}.`, 'ok');
-  if (place.wikiName) enrich(stop).then(() => { save(); if (cur()?.id === trip.id) renderTrip(); });
+  if (!stop.wikiDone) enrich(stop).then(() => { save(); if (cur()?.id === trip.id) renderTrip(); });
   if (day.stops.length > 1 && hasKey()) withBusy(() => legFor(day, day.stops.length - 1));
 };
 
@@ -434,7 +438,7 @@ $('#results').onclick = async (e) => {
   $('#q').value = '';
 
   if (b.dataset.act === 'addIdea') {
-    t.ideas.push({ id: uid(), name: place.name, wikiName: place.wikiName ?? place.name, lat: place.lat, lon: place.lon });
+    t.ideas.push({ id: uid(), name: place.name, wikiName: place.wikiName ?? place.name, wikidataId: place.wikidataId || '', wikipedia: place.wikipedia || '', lat: place.lat, lon: place.lon });
     save(); renderTrip(); toast('Lugar salvo na lista de ideias.', 'ok');
     return;
   }

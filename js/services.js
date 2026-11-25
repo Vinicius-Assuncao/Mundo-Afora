@@ -45,15 +45,16 @@ async function reversePlace(lat, lon) {
 
 async function searchPlaces(q) {
   if (!navigator.onLine) throw new Error('Sem internet: a busca de lugares só funciona online.');
-  const r = await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=5&accept-language=pt-BR&q=' + encodeURIComponent(q));
+  const r = await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=5&accept-language=pt-BR&extratags=1&namedetails=1&q=' + encodeURIComponent(q));
   if (!r.ok) throw new Error('Busca indisponível no momento.');
   return (await r.json()).map((p) => ({
     name: p.name || p.display_name.split(',')[0], lat: +p.lat, lon: +p.lon, address: p.display_name,
+    wikiName: p.name || p.namedetails?.name || '', wikidataId: p.extratags?.wikidata || '', wikipedia: p.extratags?.wikipedia || '',
   }));
 }
 
 // ---------- Wikimedia: fila global, cache e retentativas ----------
-const WIKI_CACHE_KEY = 'mundo-afora.wikimedia-cache.v2';
+const WIKI_CACHE_KEY = 'mundo-afora.wikimedia-cache.v3';
 const WIKI_CACHE_TTL = 1000 * 60 * 60 * 24 * 30;
 const WIKI_NEGATIVE_TTL = 1000 * 60 * 60 * 8;
 const WIKI_MIN_INTERVAL = 450;
@@ -203,128 +204,187 @@ async function commonsImageByTitle(title) {
   return validCommonsImage(info) ? { info, title: page.title } : null;
 }
 
-// ---------- Wikidata: identificação por nome e localização ----------
-async function findWikidataEntity(stop) {
-  const name = typeof stop === 'string' ? stop : (stop.wikiName || stop.name);
-  const lat = typeof stop === 'object' ? Number(stop.lat) : NaN;
-  const lon = typeof stop === 'object' ? Number(stop.lon) : NaN;
-  const cacheKey = `entity:${normalizeWikiText(name)}:${Number.isFinite(lat) ? lat.toFixed(3) : ''}:${Number.isFinite(lon) ? lon.toFixed(3) : ''}`;
-  if (hasWikiCache(cacheKey)) return getWikiCache(cacheKey);
+// ---------- Identificação e fotos: QID > tag wikipedia > nome similar > geografia > Commons ----------
+// Limites de segurança: tudo que é achado por aproximação precisa estar perto do ponto.
+const NAME_STOP_WORDS = new Set(['de', 'da', 'do', 'das', 'dos', 'the', 'del', 'della', 'di', 'la', 'le', 'los', 'las', 'and', 'von', 'van']);
+const NAME_MATCH_MIN = 0.6;          // similaridade mínima ao procurar entidade por nome
+const ENTITY_MAX_KM = 1.5;           // entidade achada por nome precisa estar a no máximo isto do ponto
+const WIKIPEDIA_GEO_RADIUS_M = 300;  // raio da busca geográfica da Wikipédia
+const COMMONS_GEO_RADIUS_M = 150;    // raio da busca geográfica de fotos no Commons
+const COMMONS_TEXT_MAX_KM = 0.3;     // foto achada por texto no Commons precisa ter coordenada até aqui
+const FILE_NEAR_KM = 0.5;            // foto de categoria com coordenada precisa estar até aqui
 
-  const target = normalizeWikiText(name);
-  const searchResults = [];
+function nameTokens(value) {
+  return normalizeWikiText(value).split(' ').filter((t) => t.length > 2 && !NAME_STOP_WORDS.has(t));
+}
+// 0..1: mistura de "um nome contém o outro" com sobreposição geral de palavras.
+function nameSimilarity(a, b) {
+  const A = new Set(nameTokens(a)), B = new Set(nameTokens(b));
+  if (!A.size || !B.size) return 0;
+  let inter = 0;
+  A.forEach((t) => { if (B.has(t)) inter += 1; });
+  const union = new Set([...A, ...B]).size;
+  return 0.5 * (inter / Math.min(A.size, B.size)) + 0.5 * (inter / union);
+}
+function entityCoords(entity) {
+  const p = entity?.claims?.P625?.[0]?.mainsnak?.datavalue?.value;
+  return p && Number.isFinite(p.latitude) && Number.isFinite(p.longitude) ? { lat: p.latitude, lon: p.longitude } : null;
+}
+function entityLabels(entity) {
+  return ['pt', 'en', 'it'].flatMap((l) => [entity.labels?.[l]?.value, ...(entity.aliases?.[l] || []).map((i) => i.value)]).filter(Boolean);
+}
+function hasPoint(stop) { return Number.isFinite(Number(stop.lat)) && Number.isFinite(Number(stop.lon)); }
+
+async function wikidataEntities(params) {
+  const data = await wikimediaFetch('https://www.wikidata.org/w/api.php?' + new URLSearchParams({
+    action: 'wbgetentities', props: 'labels|aliases|claims|sitelinks', languages: 'pt|en|it',
+    format: 'json', origin: '*', ...params,
+  }));
+  return Object.values(data.entities || {}).filter((e) => e && /^Q\d+$/.test(e.id || ''));
+}
+async function entityByName(name, lat, lon) {
+  const found = new Map();
   for (const language of ['pt', 'en', 'it']) {
-    const searchUrl = 'https://www.wikidata.org/w/api.php?' + new URLSearchParams({
-      action: 'wbsearchentities', search: name, language, uselang: language,
-      type: 'item', limit: '8', format: 'json', origin: '*',
-    });
-    const result = await wikimediaFetch(searchUrl);
-    const found = result.search || [];
-    searchResults.push(...found);
-    const hasExactMatch = found.some((item) =>
-      normalizeWikiText(item.label) === target
-      || normalizeWikiText(item.match?.text) === target
-    );
-    if (hasExactMatch) break;
+    const result = await wikimediaFetch('https://www.wikidata.org/w/api.php?' + new URLSearchParams({
+      action: 'wbsearchentities', search: name, language, uselang: language, type: 'item', limit: '8', format: 'json', origin: '*',
+    }));
+    (result.search || []).forEach((item) => found.set(item.id, item));
+    if ([...found.values()].some((i) => normalizeWikiText(i.label) === normalizeWikiText(name))) break;
   }
-  const unique = new Map();
-  searchResults.flat().forEach((item) => unique.set(item.id, item));
-  const candidates = [...unique.values()].filter((item) =>
-    normalizeWikiText(item.label) === target
-    || normalizeWikiText(item.match?.text) === target
-  );
-  if (!candidates.length) {
-    writeWikiCache(cacheKey, null, true);
-    return null;
+  if (!found.size) return null;
+  const entities = await wikidataEntities({ ids: [...found.keys()].slice(0, 30).join('|') });
+  const withPoint = Number.isFinite(lat) && Number.isFinite(lon);
+  const ranked = entities.map((entity) => {
+    const score = Math.max(0, ...entityLabels(entity).map((l) => nameSimilarity(name, l)));
+    const c = entityCoords(entity);
+    const distance = withPoint && c ? haversineKm(lat, lon, c.lat, c.lon) : null;
+    return { entity, score, distance };
+  }).filter((i) => i.score >= NAME_MATCH_MIN
+    // Sem coordenadas para conferir, só aceita nome praticamente idêntico.
+    && (i.distance === null ? i.score >= 0.99 : i.distance <= ENTITY_MAX_KM))
+    .sort((a, b) => (b.score - a.score) || ((a.distance ?? 9999) - (b.distance ?? 9999)));
+  return ranked[0]?.entity || null;
+}
+// Fallback geográfico: páginas da Wikipédia num raio curto, filtradas por nome parecido.
+async function entityByGeo(name, lat, lon) {
+  for (const language of ['pt', 'en']) {
+    const data = await wikimediaFetch(`https://${language}.wikipedia.org/w/api.php?` + new URLSearchParams({
+      action: 'query', generator: 'geosearch', ggscoord: `${lat}|${lon}`, ggsradius: String(WIKIPEDIA_GEO_RADIUS_M),
+      ggslimit: '10', prop: 'pageprops', ppprop: 'wikibase_item', format: 'json', origin: '*',
+    }));
+    const pages = Object.values(data.query?.pages || {}).filter((p) => p.pageprops?.wikibase_item)
+      .map((p) => ({ qid: p.pageprops.wikibase_item, score: nameSimilarity(name, p.title) }))
+      .filter((p) => p.score >= 0.5).sort((a, b) => b.score - a.score);
+    if (pages[0]) {
+      const [entity] = await wikidataEntities({ ids: pages[0].qid });
+      if (entity) return entity;
+    }
   }
-
-  const ids = candidates.map((item) => item.id).join('|');
-  const entitiesUrl = 'https://www.wikidata.org/w/api.php?' + new URLSearchParams({
-    action: 'wbgetentities', ids, props: 'labels|aliases|claims|sitelinks', languages: 'pt|en|it',
-    format: 'json', origin: '*',
-  });
-  const data = await wikimediaFetch(entitiesUrl);
-  const ranked = Object.values(data.entities || {}).map((entity) => {
-    const point = entity.claims?.P625?.[0]?.mainsnak?.datavalue?.value;
-    const entityLat = point?.latitude, entityLon = point?.longitude;
-    const distance = Number.isFinite(lat) && Number.isFinite(lon)
-      && Number.isFinite(entityLat) && Number.isFinite(entityLon)
-      ? haversineKm(lat, lon, entityLat, entityLon) : null;
-    const labels = [
-      entity.labels?.pt?.value, entity.labels?.en?.value, entity.labels?.it?.value,
-      ...(entity.aliases?.pt || []).map((item) => item.value),
-      ...(entity.aliases?.en || []).map((item) => item.value),
-      ...(entity.aliases?.it || []).map((item) => item.value),
-    ].filter(Boolean);
-    const exact = labels.some((label) => normalizeWikiText(label) === normalizeWikiText(name));
-    return { entity, distance, exact };
-  }).filter((item) => {
-    if (!item.exact) return false;
-    // Se ambos os lados têm coordenadas, rejeita homônimos distantes.
-    if (item.distance !== null && item.distance > 40) return false;
-    return true;
-  }).sort((a, b) => (a.distance ?? 9999) - (b.distance ?? 9999));
-
-  const selected = ranked[0]?.entity || null;
-  writeWikiCache(cacheKey, selected, !selected);
-  return selected;
+  return null;
+}
+async function findWikidataEntity(stop) {
+  const name = stop.wikiName || '';   // nome personalizado (stop.name) é só visual e nunca entra aqui
+  const lat = Number(stop.lat), lon = Number(stop.lon);
+  const cacheKey = `entity3:${stop.wikidataId || ''}:${stop.wikipedia || ''}:${normalizeWikiText(name)}:${hasPoint(stop) ? lat.toFixed(3) + ':' + lon.toFixed(3) : ''}`;
+  if (hasWikiCache(cacheKey)) return getWikiCache(cacheKey);
+  let entity = null;
+  if (/^Q\d+$/.test(stop.wikidataId || '')) entity = (await wikidataEntities({ ids: stop.wikidataId }))[0] || null;
+  if (!entity && stop.wikipedia) {
+    const m = /^([a-z-]+):(.+)$/i.exec(stop.wikipedia);
+    if (m) entity = (await wikidataEntities({ sites: m[1].toLowerCase() + 'wiki', titles: m[2] }))[0] || null;
+  }
+  if (!entity && name) entity = await entityByName(name, lat, lon);
+  if (!entity && name && hasPoint(stop)) entity = await entityByGeo(name, lat, lon);
+  writeWikiCache(cacheKey, entity, !entity);
+  return entity;
 }
 
-// ---------- Imagens: P18, P373 e busca estruturada por P180 ----------
+// ---------- Fotos ----------
+const IMG_PARAMS = { prop: 'imageinfo|coordinates', iiprop: 'url|mime|size|extmetadata', iiurlwidth: '900', colimit: 'max' };
+function fileCoords(page, info) {
+  const c = page.coordinates?.[0];
+  if (c) return { lat: c.lat, lon: c.lon };
+  const ext = info?.extmetadata || {};
+  const la = Number(ext.GPSLatitude?.value), lo = Number(ext.GPSLongitude?.value);
+  return Number.isFinite(la) && Number.isFinite(lo) ? { lat: la, lon: lo } : null;
+}
+function fileText(page, info) {
+  return `${page.title || ''} ${cleanExt(info?.extmetadata?.ImageDescription?.value || '')}`;
+}
+function commonsCandidates(data) {
+  return Object.values(data.query?.pages || {}).map((page) => ({ page, info: page.imageinfo?.[0] }))
+    .filter(({ info }) => validCommonsImage(info));
+}
 async function imageFromP18(entity) {
   const file = entity?.claims?.P18?.[0]?.mainsnak?.datavalue?.value;
   if (!file) return null;
   return commonsImageByTitle('File:' + file);
 }
-async function imageFromCategory(entity) {
+async function imageByDepicts(entity) {
+  if (!entity?.id) return null;
+  // A imagem precisa declarar depicts (P180) para esta entidade.
+  const data = await wikimediaFetch(commonsApi({
+    action: 'query', generator: 'search', gsrsearch: `haswbstatement:P180=${entity.id}`,
+    gsrnamespace: '6', gsrlimit: '18', ...IMG_PARAMS,
+  }));
+  const first = commonsCandidates(data)[0];
+  return first ? { info: first.info, title: first.page.title } : null;
+}
+// Categoria do item (P373): só aceita arquivo perto do ponto ou com nome parecido.
+async function imageFromCategory(entity, stop) {
   const category = entity?.claims?.P373?.[0]?.mainsnak?.datavalue?.value;
   if (!category) return null;
   const data = await wikimediaFetch(commonsApi({
     action: 'query', generator: 'categorymembers', gcmtitle: 'Category:' + category,
-    gcmtype: 'file', gcmlimit: '18', prop: 'imageinfo',
-    iiprop: 'url|mime|size|extmetadata', iiurlwidth: '900',
+    gcmtype: 'file', gcmlimit: '18', ...IMG_PARAMS,
   }));
-  const pages = Object.values(data.query?.pages || {}).sort((a, b) => (a.index || 0) - (b.index || 0));
-  for (const page of pages) {
-    const info = page.imageinfo?.[0];
-    if (validCommonsImage(info)) return { info, title: page.title };
+  for (const { page, info } of commonsCandidates(data)) {
+    if (!stop.wikiName) return { info, title: page.title };   // identificado só por ID: confia na categoria
+    const c = fileCoords(page, info);
+    if (c && hasPoint(stop)) {
+      if (haversineKm(stop.lat, stop.lon, c.lat, c.lon) <= FILE_NEAR_KM) return { info, title: page.title };
+    } else if (nameSimilarity(stop.wikiName, fileText(page, info)) >= 0.5) {
+      return { info, title: page.title };
+    }
   }
   return null;
 }
-async function imageByDepicts(entity) {
-  const qid = entity?.id;
-  if (!qid) return null;
-  // Pesquisa estruturada no Commons: a imagem precisa declarar depicts (P180) para esta entidade.
+// Fallback Commons 1: fotos geolocalizadas num raio curto cujo título/descrição lembra o nome.
+async function commonsGeoPhoto(stop) {
   const data = await wikimediaFetch(commonsApi({
-    action: 'query', generator: 'search', gsrsearch: `haswbstatement:P180=${qid}`,
-    gsrnamespace: '6', gsrlimit: '18', prop: 'imageinfo',
-    iiprop: 'url|mime|size|extmetadata', iiurlwidth: '900',
+    action: 'query', generator: 'geosearch', ggscoord: `${stop.lat}|${stop.lon}`,
+    ggsradius: String(COMMONS_GEO_RADIUS_M), ggslimit: '30', ggsnamespace: '6', ...IMG_PARAMS,
   }));
-  const pages = Object.values(data.query?.pages || {});
-  for (const page of pages) {
-    const info = page.imageinfo?.[0];
-    if (validCommonsImage(info)) return { info, title: page.title };
-  }
-  return null;
+  const best = commonsCandidates(data)
+    .map((x) => ({ ...x, score: nameSimilarity(stop.wikiName, fileText(x.page, x.info)) }))
+    .filter((x) => x.score >= 0.5).sort((a, b) => b.score - a.score)[0];
+  return best ? { info: best.info, title: best.page.title } : null;
 }
-async function wikidataPhoto(entity) {
-  if (!entity) return null;
-  const key = `photo:${entity.id}`;
-  if (hasWikiCache(key)) return getWikiCache(key);
-  let result = await imageFromP18(entity);
-  if (!result) result = await imageFromCategory(entity);
-  if (!result) result = await imageByDepicts(entity);
+// Fallback Commons 2: busca por texto, mas só aceita foto COM coordenada perto do ponto.
+async function commonsTextPhoto(stop) {
+  const data = await wikimediaFetch(commonsApi({
+    action: 'query', generator: 'search', gsrsearch: stop.wikiName, gsrnamespace: '6', gsrlimit: '20', ...IMG_PARAMS,
+  }));
+  const best = commonsCandidates(data).map((x) => {
+    const c = fileCoords(x.page, x.info);
+    const km = c ? haversineKm(stop.lat, stop.lon, c.lat, c.lon) : null;
+    return { ...x, km, score: nameSimilarity(stop.wikiName, fileText(x.page, x.info)) };
+  }).filter((x) => x.km !== null && x.km <= COMMONS_TEXT_MAX_KM && x.score >= 0.34)
+    .sort((a, b) => (b.score - a.score) || (a.km - b.km))[0];
+  return best ? { info: best.info, title: best.page.title } : null;
+}
+async function stopPhoto(entity, stop) {
+  const cacheKey = `photo3:${entity?.id || ''}:${normalizeWikiText(stop.wikiName || '')}:${hasPoint(stop) ? Number(stop.lat).toFixed(3) + ':' + Number(stop.lon).toFixed(3) : ''}`;
+  if (hasWikiCache(cacheKey)) return getWikiCache(cacheKey);
+  let result = null;
+  if (entity) result = (await imageFromP18(entity)) || (await imageByDepicts(entity)) || (await imageFromCategory(entity, stop));
+  if (!result && stop.wikiName && hasPoint(stop)) result = (await commonsGeoPhoto(stop)) || (await commonsTextPhoto(stop));
   if (!result) {
-    writeWikiCache(key, null, true);
+    writeWikiCache(cacheKey, null, true);
     return null;
   }
-  const attribution = attributionFromImageInfo(result.info);
-  const photo = {
-    url: result.info.thumburl || result.info.url,
-    title: result.title,
-    ...attribution,
-  };
-  writeWikiCache(key, photo);
+  const photo = { url: result.info.thumburl || result.info.url, title: result.title, ...attributionFromImageInfo(result.info) };
+  writeWikiCache(cacheKey, photo);
   return photo;
 }
 
@@ -358,11 +418,10 @@ async function wikiInfo(nameOrStop) {
   const out = { desc: '', photo: '', url: '', photoCredit: '', photoAttribution: null, wikidataId: '' };
   try {
     const entity = await findWikidataEntity(stop);
-    if (!entity) return out;
-    out.wikidataId = entity.id || '';
+    out.wikidataId = entity?.id || '';
     const [summary, photo] = await Promise.all([
       wikipediaSummary(entity),
-      wikidataPhoto(entity),
+      stopPhoto(entity, stop),
     ]);
     out.desc = summary.desc;
     out.url = summary.url;

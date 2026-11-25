@@ -140,7 +140,7 @@ function newDay(i, date = null) {
   return { id: uid(), name: `Dia ${i + 1}`, date, color: COLORS[i % COLORS.length], stops: [] };
 }
 function newStop(place) {
-  return { id: uid(), name: place.name, wikiName: place.wikiName ?? place.name, lat: place.lat, lon: place.lon, time: '', stay: 60,
+  return { id: uid(), name: place.name, wikiName: place.wikiName ?? place.name, wikidataId: place.wikidataId || '', wikipedia: place.wikipedia || '', lat: place.lat, lon: place.lon, time: '', stay: 60,
     transport: 'walk', desc: '', photo: '', originalPhoto: '', url: '', icon: '', wikiDone: false };
 }
 function sortedTrips() {

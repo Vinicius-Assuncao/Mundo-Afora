@@ -62,7 +62,6 @@ dialog input { border-color: #dde5eb; }
 
 .map-pick-btn { margin-top: 9px; width: 100%; justify-content: center; display: inline-flex; align-items: center; gap: 8px; }
 .map-pick-btn.active { background: #e8f0f8; color: var(--azul-e); border-color: var(--azul); }
-.map-pick-hint { margin: 8px 0 0; padding: 9px 11px; border-radius: 10px; background: #eaf3ff; color: #244f78; font-size: .84rem; font-weight: 600; }
 .stop-rename { flex: 0 0 auto; }
 .stop-name-input {
   width: 100%;
